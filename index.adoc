@@ -1,0 +1,805 @@
+= FST Format Specification
+Tim Hutt
+:description: Specification of the FST digital waveform file format.
+:stylesheet: style.css
+:toc: left
+
+== Introduction
+
+The only standard format for storing digital waveforms from HDL simulations is https://en.wikipedia.org/wiki/Value_change_dump[VCD] (Value Change Dump). Unfortunately it’s an ancient and hilariously inefficient text based format. It’s really only suitable for tiny projects. As a result most commercial EDA vendors use their own more efficient proprietary formats, for example Synopsys's VCS simulator uses FSDB (Fast Signal DataBase) and Mentor's Questa simulator uses WLF (Wave Log Format).
+
+.GtkWave displaying some digital waveforms. The design hierarchy is shown in the top left corner.
+image::gtkwave_screenshot.webp[align="center",opts="inline"]
+
+Unfortunately these formats are all proprietary, therefore the https://github.com/gtkwave/gtkwave[GtkWave] authors created a series of formats improving on VCD culminating in FST (Fast Signal Trace), created in 2014. It is supported by GtkWave, https://verilator.org/guide/latest/exe_verilator.html#cmdoption-trace-fst[Verilator] and http://www.tachyon-da.com/what-is-cvc/[CVC] and although it has some quirks it is much much better than VCD.
+
+// A brief history of other digital waveform formats can be found in the appendix.
+// TODO: Finish writing that. It requires more research.
+
+Unfortunately there is no official specification for FST, so I wrote this one based on reading https://github.com/gtkwave/gtkwave/blob/c98739bfeb663ba2d695165759dbdf850f0147ab/gtkwave4/src/helpers/fst/[the GtkWave FST source code].
+
+WARNING: I didn’t create the FST format so there may be errors in this specification. If you find any please let me know.
+
+== Format Overview
+
+Below is a hyperlinked diagram of the entire format. It is a block based format with a few metadata blocks and a set of <<Value Change Block,Value Change blocks>> which store the actual waveform data. Each Value Change block spans a period of time and includes the initial value of all variables, so it can be decoded independently of any other block. It is designed so the waveforms for a few variables can be extracted without having to decode the entire block.
+
+The hierarchy block records the design hierarchy (modules, functions, ports, etc.). The geometry block records the length of each variable in bits. Finally the blackout block records when `$dumpoff` and `$dumpon` were executed.
+
+The data in the blocks is compressed with a bewildering variety of compression algorithms and custom encoding schemes.
+
+.Overview of the FST format.
+image::overview.drawio.svg[align="center",opts="inline"]
+
+== Data Types
+
+The following data types are used in this document.
+
+[options="header,autowidth"]
+|===
+| Type      | Size (bytes) | Signed? | Endianness | Notes
+| `u8`      | 1            | No      | Invariant  |
+| `i8`      | 1            | Yes     | Invariant  |
+| `u64`     | 8            | No      | Big        |
+| `i64`     | 8            | Yes     | Big        |
+| `f64`     | 8            | Yes     | Native     | Floating point `double` type.
+| `varint`  | 1-10         | No      | Invariant  | See <<Varints>>.
+| `svarint` | 1-10         | Yes     | Invariant  | See <<Varints>>.
+|===
+
+Null terminated strings are also used at several points in the format. The encoding is not specified however it is reasonable to assume it is ASCII. The strings are used for display purposes only so the encoding is not critical.
+
+=== Endianness
+
+Most types have a defined Endianness (unfortunately Big Endian), however `f64` is for some reason written using native Endianness. The <<header_real_endianness>> header field is an `f64` with the constant value _e_ (i.e. 2.72…) that can be used to detect the Endianness used by the file writer.
+
+=== Varints
+
+Varints are encoded similarly to the https://en.wikipedia.org/wiki/LEB128[LEB128 format] but Big Endian instead of Little and only up to 64 bits. In short, the upper big of each byte indicates whether it is the last byte in the varint (1=not last byte, 0=last byte). Then the bits of the number are spread over the lower 7 bits of each byte in Big Endian order (the last byte in the `varint` contains the 7 lowest bits in the encoded number).
+
+.The unsigned `varint` format used by FST.
+image::varint.drawio.svg[align="center",opts="inline"]
+
+The encoding for signed numbers (`svarint`) is the same but a sign bit is always retained. When decoding the decoded number is sign-extended instead of zero-extended to 64 bits to give a 2's complement signed number.
+
+.The signed `svarint` format used by FST.
+image::svarint.drawio.svg[align="center",opts="inline"]
+
+Note that the GtkWave code assumes that some ``varint``s fit inside 32 bits. However it is inconsistent about this. For example `max_blackouts` is written as `varint64` but read as `varint32`. Therefore we do not distinguish `varint32` and `varint64` in this specification. It is probably best to assume that all values can be up to 64 bits.
+
+// TODO: Provide simple implementations of the various encoding schemes in this specification.
+// .Rust implementation
+// [%collapsible]
+// ====
+// [source,ruby]
+// ----
+// fn decode_varint(input: &[u8]) -> Option<u64> {
+//     let mut value = 0;
+//     for byte in input {
+//         // Check for overflow.
+//         if value >> (63-7) != 0 {
+//             return None;
+//         }
+//         value = (value << 7) | (byte & 0x7F);
+//         // Check if we're finished.
+//         if byte & 0x80 == 0 {
+//             return Ok(value);
+//         }
+//     }
+//     None
+// }
+// fn decode_svarint(input: &[u8]) -> Option<i64> {
+//     let initial = if input[0] & 0x40 == 0 { 0 } else { -1 };
+//     let mut value = initial;
+//     for byte in input {
+//         // Check for overflow.
+//         if value >> (63-7) != initial {
+//             return None;
+//         }
+//         value = (value << 7) | (byte & 0x7F);
+//         // Check if we're finished.
+//         if byte & 0x80 == 0 {
+//             return Ok(value);
+//         }
+//     }
+//     None
+// }
+// fn encode_varint(output: impl Write, value: u64) {
+//     // TODO
+// }
+// fn encode_svarint(output: impl Write, value: u64) {
+//     // TODO
+// }
+// ----
+// ====
+
+=== Design Heirarchy, Aliases and Variable IDs
+
+The <<Hiearchy Block>> describes the design hiearchy -- essentially all the modules and ports. Each recorded signal is called a _variable_. Since many of the variables are directly connected to each other in the design -- sometimes many times as with clocks and resets, FST allows you to declare some variables to be aliases of others. Every _distinct_ variable has a unique variable ID, numbered from 0 to `<<header_num_vars>>-1` based on the order that they appear in the <<Hierarchy Block>>.
+
+== Blocks
+
+A FST file is composed of a sequences of TLV (Tag, Length, Value) blocks (AKA sections) all with the following header.
+
+[options="header,autowidth"]
+|===
+| Offset | Type  | Description
+| 0      | `u8`  | Block type (see <<BlockType>>).
+| 1      | `u64` | Length of the block in bytes, including this length value but not including the block type byte.
+| 9      | -     | The block data.
+|===
+
+=== `BlockType` [[BlockType]]
+
+The block type can be one of the following values:
+
+[options="header,autowidth"]
+|===
+| Name                                                                              | Value | Description
+| [[FST_BL_HDR,`FST_BL_HDR`]]`FST_BL_HDR`                                           | 0     | Header block, found at the start of the file.
+| [[FST_BL_VCDATA,`FST_BL_VCDATA`]]`FST_BL_VCDATA`                                  | 1     | Value Change data. Records the actual waveforms for a block of time.
+| [[FST_BL_BLACKOUT,`FST_BL_BLACKOUT`]]`FST_BL_BLACKOUT`                            | 2     | Stores the times when `$dumpoff/on` was called.
+| [[FST_BL_GEOM,`FST_BL_GEOM`]]`FST_BL_GEOM`                                        | 3     | Stores the length of each variable.
+| [[FST_BL_HIER,`FST_BL_HIER`]]`FST_BL_HIER`                                        | 4     | Hierarchy data (names of modules, wires etc.)
+| [[FST_BL_VCDATA_DYN_ALIAS,`FST_BL_VCDATA_DYN_ALIAS`]]`FST_BL_VCDATA_DYN_ALIAS`    | 5     | Newer version of <<FST_BL_VCDATA>>.
+| [[FST_BL_HIER_LZ4,`FST_BL_HIER_LZ4`]]`FST_BL_HIER_LZ4`                            | 6     | Hierarchy data compressed with LZ4
+| [[FST_BL_HIER_LZ4DUO,`FST_BL_HIER_LZ4DUO`]]`FST_BL_HIER_LZ4DUO`                   | 7     | Hierarchy data compressed with LZ4 _twice_. This gives better compression.
+| [[FST_BL_VCDATA_DYN_ALIAS2,`FST_BL_VCDATA_DYN_ALIAS2`]]`FST_BL_VCDATA_DYN_ALIAS2` | 8     | Even newer version of <<FST_BL_VCDATA>>.
+| [[FST_BL_ZWRAPPER,`FST_BL_ZWRAPPER`]]`FST_BL_ZWRAPPER`                            | 254   | This block is an entire FST file that has been GZipped.
+| [[FST_BL_SKIP,`FST_BL_SKIP`]]`FST_BL_SKIP`                                        | 255   | Value Change blocks are set to this type while being written.
+|===
+
+=== File Structure
+
+The order of blocks in an FST file is as follows. The <<Header Block>> is followed by any number of <<Value Change Block,Value Change blocks>>. When the file is finalised a <<Geometry Block>>, an optional <<Blackout Block>> (omitted if there are no blackouts), and an optional <<Hierarchy Block>> are appended.
+
+[options="header,autowidth"]
+|===
+| Block Type             | Count
+| <<Header Block>>       | 1
+| <<Value Change Block>> | <<header_num_vc_blocks>>
+| <<Geometry Block>>     | 1
+| <<Blackout Block>>     | 0/1
+| <<Hierarchy Block>>    | 0/1
+|===
+
+When a tool is writing out an FST file, it actually does it to two separate files - the main file `foo.fst`, and an auxiliary file `foo.fst.hier`. When the `.fst` file is finalised the `.hier` is optionally appended to it and then deleted. It is also possible to just leave the `.hier` file as a separate file.
+
+Additionally the entire FST file can be repacked using GZip when finalised so it appears as a single <<GZip Block>>. I am not sure why this feature exists. I recommend not supporting this. If you want this functionality support opening `.fst.gz` files directly instead.
+
+=== Header Block
+
+An FST file always starts with a header block. There is no magic number before it. The header block has the following structure.
+
+[options="header,autowidth"]
+|===
+| Name                                                                              | Offset | Type      | Description
+| [[header_block_type,`header_block_type`]]`header_block_type`                      | 0      | `u8`      | Block type (<<FST_BL_HDR>>).
+| [[header_block_length,`header_block_length`]]`header_block_length`                | 1      | `u64`     | Block length.
+| [[header_start_time,`header_start_time`]]`header_start_time`                      | 9      | `u64`     | Start time of the file. Units are given by <<header_timescale>>.
+| [[header_end_time,`header_end_time`]]`header_end_time`                            | 17     | `u64`     | End time of the file.
+| [[header_real_endianness,`header_real_endianness`]]`header_real_endianness`       | 25     | `f64`     | The value _e_ (2.7182818284590452354). This is used as an endianness test for reals. See <<Endianness>>.
+| [[header_writer_memory_use,`header_writer_memory_use`]]`header_writer_memory_use` | 33     | `u64`     | Memory used when writing this file in bytes. For informational purposes.
+| [[header_num_scopes,`header_num_scopes`]]`header_num_scopes`                      | 41     | `u64`     | Number of scopes (`FST_ST_VCD_SCOPE` entries in the hierarchy).
+| [[header_num_hiearchy_vars,`header_num_hiearchy_vars`]]`header_num_hiearchy_vars` | 49     | `u64`     | Number of variables in the hierarchy.
+| [[header_num_vars,`header_num_vars`]]`header_num_vars`                            | 57     | `u64`     | Number of variables that are distinct - that is, not structurally equivalent. The same variable (e.g. a clock) may appear many times in the hierarchy but its values are only stored once.
+| [[header_num_vc_blocks,`header_num_vc_blocks`]]`header_num_vc_blocks`             | 65     | `u64`     | Number of <<Value Change Block,Value Change blocks>> in the file.
+| [[header_timescale,`header_timescale`]]`header_timescale`                         | 73     | `i8`      | Order of magnitude of the time unit. 0=1s, -9=1ns, etc.
+| [[header_writer,`header_writer`]]`header_writer`                                  | 74     | `u8[128]` | Simulator identifier. Should be null terminated if shorter than 128  bytes. If 128 bytes it does not need to be null terminated.
+| [[header_date,`header_date`]]`header_date`                                        | 202    | `u8[26]`  | Null terminated date string as returned by https://en.cppreference.com/w/cpp/chrono/c/asctime[`asctime()`]. Note that the string ends with `\n` because that’s what `asctime()` returns, presumably because whoever wrote it had no design sense.
+| [[header_reserved,`header_reserved`]]`header_reserved`                            | 228    | -         | Reserved for future use. Should be filled with zeros when written.
+| [[header_filetype,`header_filetype`]]`header_filetype`                            | 321    | `u8`      | File type (see <<FileType>>). Default is `FST_FT_VERILOG`.
+| [[header_timezero,`header_timezero`]]`header_timezero`                            | 322    | `i64`     | Timezero (`$timezero` in a VCD file). This is needed when the actual simulation start time is negative. It gives the real time of the "0" time. In other words it shifts all of the times that should be displayed.
+|===
+
+=== Hierarchy Block
+
+This records the design hierachy and all the signal names.
+
+[options="header,autowidth"]
+|===
+| Name                                                                                                      | Offset  | Type  | Description
+| [[hierarchy_type,`hierarchy_type`]]`hierarchy_type`                                                       | 0       | `u8`  | Block type (<<FST_BL_HIER>> / <<FST_BL_HIER_LZ4>> / <<FST_BL_HIER_LZ4DUO>>).
+| [[hierarchy_length,`hierarchy_length`]]`hierarchy_length`                                                 | 1       | `u64` | Block length.
+| [[hierarchy_uncompressed_length,`hierarchy_uncompressed_length`]]`hierarchy_uncompressed_length`          | 9       | `u64` | Uncompressed length of `hierarchy_data`.
+| [[hierarchy_compressed_once_length,`hierarchy_compressed_once_length`]]`hierarchy_compressed_once_length` | 17      | `u64` | _Only present for <<FST_BL_HIER_LZ4DUO>>._ Length of the data after it has been compressed once.
+| [[hierarchy_data,`hierarchy_data`]]`hierarchy_data`                                                       | 17/25   | -     | Compressed hierarchy data.
+|===
+
+The `hierarchy_data` compression method is given by `hierarchy_type` as follows:
+
+[options="header,autowidth"]
+|===
+| Block Type             | Compression
+| <<FST_BL_HIER>>        | GZip
+| <<FST_BL_HIER_LZ4>>    | LZ4
+| <<FST_BL_HIER_LZ4DUO>> | LZ4 applied twice.
+|===
+
+The field `hiearchy_compressed_once_length` is only present if the block type is `FST_BL_HIER_LZ4DUO`. It records the length of the data after one application of LZ4.
+
+Note that unlike elsewhere, the compression is unconditional. You shouldn't check whether the uncompressed length is the same as the compressed length.
+
+After decompression the `hierarchy_data` is a list of tagged values. The tags are `u8` with the following values:
+
+* `FST_ST_GEN_ATTRBEGIN`
+* `FST_ST_GEN_ATTREND`
+* `FST_ST_VCD_SCOPE`
+* `FST_ST_VCD_UPSCOPE`
+* `FST_VT_VCD_*` (<<VarType>>)
+
+Each tag is followed by some variable length data. It _doesn’t_ include an explicit length field like TLV so you can’t skip entries without parsing them.
+
+*`FST_ST_GEN_ATTRBEGIN`*
+
+Begin an attribute for the current scope. This will be followed by an `FST_ST_GEN_ATTREND` _unless_ the type is `FST_AT_MISC`, which shouldn't have one.
+
+* `u8`: Type (see <<AttrType>>).
+* `u8`: Subtype (see <<MiscType>>).
+* `u8[up to 512]`: Name. This must be null terminated.
+* `varint`: Attribute value.
+
+*`FST_ST_GEN_ATTREND`*
+
+No data. This is just used to mark the end of an attribute.
+
+*`FST_ST_VCD_SCOPE`*
+
+Enter a new scope (module, function, etc.).
+
+* `u8`: Type (see `ScopeType`).
+* `u8[up to 512]`: Name. This must be null terminated.
+* `u8[up to 512]`: Component. This must be null terminated.
+
+*`FST_ST_VCD_UPSCOPE`*
+
+No data. Just used to mark the end of a scope.
+
+*`FST_VT_VCD_*`*
+
+* `u8`: Direction for ports (see `VarDir`).
+* `u8[up to 512]`: Name. This must be null terminated.
+* `varint`: Length of the variable in bits. If this is `FST_VT_VCD_PORT` the length interpreted differently.
+* `varint`: Structural alias to an existing variable ID. If this is an alias it is set to the variable ID plus 1. If it is not an alias it is set to 0 and the variable is assigned an ID one more than the previous non-aliased variable.
+
+// TODO: How is the length interpreted differently for FST_VT_VCD_PORT?
+
+For example if the reader encounters the following alias values it will assign the resulting variable IDs:
+
+[options="header,autowidth"]
+|===
+| Alias varint | Assigned variable ID
+| 0            | 0
+| 0            | 1
+| 0            | 2
+| 0            | 3
+| 2            | Alias to variable ID 1
+| 1            | Alias to varibale ID 0
+| 0            | 4
+| 0            | 5
+| 6            | Alias to variable ID 5
+| 0            | 6
+|===
+
+Structural aliases are used when the same functionally equivalent signal appears in multiple places in the hierarchy (e.g. with clocks and resets). The value changes of these variables are only encoded once. This is different to dynamic aliases which are used when two variables happen to have the same waveform within a block.
+
+=== Geometry Block
+
+This describes the length of each variable in bits.
+
+[options="header,autowidth"]
+|===
+| Name                                                                              | Offset | Type  | Description
+| [[geom_type,`geom_type`]]`geom_type`                                              | 0      | `u8`  | Block type (<<FST_BL_GEOM>>).
+| [[geom_length,`geom_length`]]`geom_length`                                        | 1      | `u64` | Block length.
+| [[geom_uncompressed_length,`geom_uncompressed_length`]]`geom_uncompressed_length` | 9      | `u64` | Length of uncompressed data (or equal to the compressed length if not compressed).
+| [[geom_count,`geom_count`]]`geom_count`                                           | 17     | `u64` | Number of length entries in the data.
+| [[geom_data,`geom_data`]]`geom_data`                                              | 25     | -     | Compressed geometry data. Compressed length is `geom_length - 24`.
+|===
+
+The geometry data is compressed using ZLib, unless `geom_uncompressed_length == geom_length - 24` in which case it is uncompressed.
+
+The data is an array of `geom_count` ``varint``s that record the length of each variable. The length is recorded as 0 for reals and 0xFFFFFFFF for zero length variables. Note that is not the maximum value a `varint` can encode. It is just a very large value.
+
+=== Value Change Block
+
+These blocks store the actual variable data. Each block stores the waveforms of all variables for a contiguous period of time.
+
+[options="header,autowidth"]
+|===
+| Name                                                                                       | Offset | Type     | Description
+| [[vc_type,`vc_type`]]`vc_type`                                                             | 0      | `u8`     | Block type (<<FST_BL_SKIP>> while being written, <<FST_BL_VCDATA>>, <<FST_BL_VCDATA_DYN_ALIAS>> or <<FST_BL_VCDATA_DYN_ALIAS2>> when finalised).
+| [[vc_length,`vc_length`]]`vc_length`                                                       | 1      | `u64`    | Block length.
+| [[vc_start_time,`vc_start_time`]]`vc_start_time`                                           | 9      | `u64`    | Start time of the block. The units are given by <<header_timescale>>.
+| [[vc_end_time,`vc_end_time`]]`vc_end_time`                                                 | 17     | `u64`    | End time of the block.
+| [[vc_memory_required,`vc_memory_required`]]`vc_memory_required`                            | 25     | `u64`    | Amount of buffer memory required when reading this block for a full Value Change traversal.
+| [[vc_bits_uncompressed_length,`vc_bits_uncompressed_length`]]`vc_bits_uncompressed_length` | 33     | `varint` | Uncompressed length
+| [[vc_bits_compressed_length,`vc_bits_compressed_length`]]`vc_bits_compressed_length`       | -      | `varint` | Compressed length (equal to the uncompressed length if no compression).
+| [[vc_bits_count,`vc_bits_count`]]`vc_bits_count`                                           | -      | `varint` | Number of entries in the bits table.
+| [[vc_bits_data,`vc_bits_data`]]`vc_bits_data`                                              | -      | -        | Bits Array data. Compressed with ZLib if the compressed and uncompressed lengths differ.
+| [[vc_waves_count,`vc_waves_count`]]`vc_waves_count`                                        | 0      | `varint` | Number of waveforms in the waves table.
+| [[vc_waves_packtype,`vc_waves_packtype`]]`vc_waves_packtype`                               | -      | `u8`     | Compression type used for <<vc_waves_data>> entries (see <<WriterPackType>>).
+| [[vc_waves_data,`vc_waves_data`]]`vc_waves_data`                                           | -      | -        | Set of deduplicated waveforms for this time period.
+| [[vc_position_data,`vc_position_data`]]`vc_position_data`                                  | 0      | -        | Position Table data, encoded as described below.
+| [[vc_position_length,`vc_position_length`]]`vc_position_length`                            | -      | `u64`    | Length of `vc_position_data`.
+| [[vc_time_data,`vc_time_data`]]`vc_time_data`                                              | 0      | -        | Time Table data. Compressed with ZLib.
+| [[vc_time_uncompressed_length,`vc_time_uncompressed_length`]]`vc_time_uncompressed_length` | -      | `u64`    | Uncompressed length of time table.
+| [[vc_time_compressed_length,`vc_time_compressed_length`]]`vc_time_compressed_length`       | -      | `u64`    | Compressed length of time table (equal to uncompressed length if there’s no compression).
+| [[vc_time_count,`vc_time_count`]]`vc_time_count`                                           | -      | `u64`    | Number of items in the time table.
+|===
+
+It contains four tables - the bits array, waves table, position table and time table. Note that the lengths of the position and time tables come _after_ their data, so you have to read backwards from the end to decode those tables. I am not sure of the reason for this.
+
+==== Bits Array
+
+The bits array stores the value of all signals at <<vc_start_time>>. <<vc_bits_data>> contains the value of each signal concatenated. The length of each is signal (in bits) is given in the <<Geometry Block>>. Variable length records are not stored because they have no state. Reals are stored as `f64` (`f32` is never used even if that is the actual datatype in the simulation).
+
+// TODO: How are values encoded?
+
+==== Waves Table
+
+This table contains the actual value changes for each variable. These are deduplicated so that if two variables happen to have the same value changes for the time period that this block covers, that data will not be stored twice -- even if the two variables are not structurally equivalent.
+
+The data consists of <<vc_waves_count>> of the following:
+
+[options="header,autowidth"]
+|===
+| Name                                                   | Offset | Type     | Description
+| [[vc_waves_length,`vc_waves_length`]]`vc_waves_length` | 0      | `varint` | Uncompressed length of the waves. 0 means it is not compressed.
+| [[vc_waves_values,`vc_waves_values`]]`vc_waves_values` | -      | -        | Wave data. Compression type is given by `vc_packtype` (unless `vc_waves_length` is 0 in which case it is uncompressed).
+|===
+
+The data that is stored is a series of (_time_delta_, _value_) pairs. The _time_delta_ encodes an index into the <<Time Table>> (it is the delta from the previous index). The data pair is encoded differently depending on the variable type and length.
+
+If the variable is a 1-bit value (e.g. `logic` or `bit` in SystemVerilog) then the time_delta and value are encoded as a single `varint` depending on its value:
+
+[options="header,autowidth"]
+|===
+| Value | Varint Value
+| 0     | `time_delta << 2 \| 0 << 1 \| 0`
+| 1     | `time_delta << 2 \| 1 << 1 \| 0`
+| X     | `time_delta << 4 \| 0 << 1 \| 1`
+| Z     | `time_delta << 4 \| 1 << 1 \| 1`
+| H     | `time_delta << 4 \| 2 << 1 \| 1`
+| U     | `time_delta << 4 \| 3 << 1 \| 1`
+| W     | `time_delta << 4 \| 4 << 1 \| 1`
+| L     | `time_delta << 4 \| 5 << 1 \| 1`
+| -     | `time_delta << 4 \| 6 << 1 \| 1`
+| ?     | `time_delta << 4 \| 7 << 1 \| 1`
+|===
+
+SystemVerilog uses 0, 1, X and Z. VHDL can use all values. See https://en.wikipedia.org/wiki/IEEE_1164
+
+The lowest bit indicates whether the value is 0/1 or not. 0 and 1 are encoded in a slightly more efficient way than the other values since they are so much more common. If the variable is *not* a 1-bit value then the `time_delta` is encoded as its own `varint` together with an encoding mode bit:
+
+    time_delta << 1 | all_binary
+
+If `all_binary` is 1 then this means the value only contains 0's or 1's. There are no X's, Z's and so on. In this case the values are encoded as raw bits packed into a whole number of bytes.
+
+// TODO: What endianness?
+
+If `all_binary` is 0 then the data that follows is encoded as raw ASCII, e.g. "01Z011XX1".
+
+The rules for `FST_VT_VCD_REAL` are slightly different:
+
+* If `all_binary` is 0 then the bits of the `f64` are encoded as ASCII as before (this is unlikely to happen but it is possible). If they're 1 then it is a _native Endian_ `f64`.
+
+==== Position Table
+
+This contains pointers into the value change data for each variable to allow deduplicating them. The pointers for each variable are decoded from the Position Table data in different ways depending on the Block Type.
+
+*FST_BL_VCDATA_DYN_ALIAS2*
+
+The Position Table data expands to an array of signed integers. The meaning of theses decoded numbers is as follows:
+
+[options="header,autowidth"]
+|===
+| Decoded position value | Meaning
+| 0                      | The variable has no value changes.
+| >0                     | This is a offset into <<vc_waves_data>>.
+| <0                     | This is a "dynamic alias". The variable's change data is exactly the same as the variable with this ID code (negated and minus one).
+|===
+
+For example if we have this sequence:
+
+    0 0 100 0 -3 0 200 300 -3
+
+It means the following:
+
+[options="header,autowidth"]
+|===
+| Variable ID | Integer Value | Meaning
+| 0           | 0             | This variable doesn't change in this block.
+| 1           | 0             | This variable doesn't change in this block.
+| 2           | 100           | The changes are at byte offset 100 in <<vc_waves_data>>.
+| 3           | 0             | This variable doesn't change in this block.
+| 4           | -3            | _In this block_ this variable has the same changes as variable 2.
+| 5           | 0             | This variable doesn't change in this block.
+| 6           | 200           | The changes are at byte offset 200 in <<vc_waves_data>>.
+| 7           | 350           | The changes are at byte offset 300 in <<vc_waves_data>>.
+| 8           | -3            | _In this block_ this variable has the same changes as variable 2.
+|===
+
+Those numbers are then encoded as follows.
+
+* A run of 1 or more 0's (i.e. any length of 0's) are encoded as a `varint` equal to `run_length << 1`.
+* All other values are encoded as an `svarint` equal to `value << 1 | 1` where `value` is:
+    * 0 if it is a dynamic alias that matches the previous dynamic alias (as in the second -3 here).
+    * If negative: equal to the negative value.
+    * If positive: equal to the delta from the previous positive value.
+    *  The exception is if a dynamic alias matches the previous dynamic alias (as in the second `-3` here). Then it is encoded as `0 << 1 | 1` (i.e. `1`).
+
+So the above values would be encoded as:
+
+[options="header,autowidth"]
+|===
+| Variable ID | Integer Value | Encoding
+| 0           | 0             | Run of two 0's so `varint(2 << 1)` = `varint(4)` = 0x04
+| 1           | 0             | -
+| 2           | 100           | `svarint(100 << 1 \| 1)` = `svarint(201)` = 0xTODO
+| 3           | 0             | Run of one 0 so `varint(1 << 1)` = `varint(2)` = 0x02
+| 4           | -3            | `svarint(-3 << 1 \| 1)` = `svarint(-5)` = 0xTODO
+| 5           | 0             | Run of one 0 so `varint(1 << 1)` = `varint(2)` = 0x02
+| 6           | 200           | Delta from previous is 100 so `svarint(100 << 1 \| 1)` = `svarint(201)` = 0xTODO
+| 7           | 350           | Delta from previous is 150 so `svarint(150 << 1 \| 1)` = `svarint(301)` = 0xTODO
+| 8           | -3            | Matches previous dynamic alias (variable 4) so `svarint(0 << 1 \| 1)` = 0x01
+|===
+
+*FST_BL_VCDATA_DYN_ALIAS*
+
+This uses a slightly different encoding to the above scheme.
+
+// TODO: What scheme? Maybe not worth describing. Dunno how old it is.
+
+==== Time Table
+
+The Time Table data is a series of `varint`s that encode the time differences between simulation times when a value changes. For instance if value changes occur at these times:
+
+    10, 50, 100, 101
+
+Then the Time Table data contains these `varint`s:
+
+    10, 40, 50, 1
+
+=== Blackout Block
+
+This records the times that `$dumpoff` and `$dumpon` were called.
+
+[options="header,autowidth"]
+|===
+| Name                                                  | Offset | Type     | Description
+| [[blackout_type,`blackout_type]]`blackout_type`       | 0      | `u8`     | Block type (<<FST_BL_BLACKOUT>>).
+| [[blackout_length,`blackout_length]]`blackout_length` | 1      | `u64`    | Block length.
+| [[blackout_count,`blackout_count]]`blackout_count`    | 9      | `varint` | Number of blackout entries.
+|===
+
+Then it is followed by _`blackout_count`_ records with this structure:
+
+[options="header,autowidth"]
+|===
+| Name                                                               | Offset | Type     | Description
+| [[blackout_activity,`blackout_activity`]]`blackout_activity`       | 0      | `u8`     | Blackout activity. 0 = `$dumpoff`, 1 = `$dumpon`.
+| [[blackout_time_delta,`blackout_time_delta`]]`blackout_time_delta` | 1      | `varint` | Time delta from the previous activity.
+|===
+
+=== GZip Block
+
+The entire FST file can be optionally repacked using GZip on close. In that case the file appears as a single wrapper block of this type. I do not recommend using or supporting this. I cannot see the advantage over just supporting `.fst.gz` directly.
+
+[options="header,autowidth"]
+|===
+| Name                                                                                          | Offset | Type  | Description
+| [[zwrapper_type,`zwrapper_type`]]`zwrapper_type`                                              | 0      | `u8`  | Block type (<<FST_BL_ZWRAPPER>>).
+| [[zwrapper_length,`zwrapper_length`]]`zwrapper_length`                                        | 1      | `u64` | Block length.
+| [[zwrapper_uncompressed_length,`zwrapper_uncompressed_length`]]`zwrapper_uncompressed_length` | 9      | `u64` | Length of the section in bytes (uncompressed)
+| [[zwrapper_data,`zwrapper_data`]]`zwrapper_data`                                              | 17     | -     | The GZip (not ZLib) compressed FST file.
+|===
+
+== Enums
+
+=== `WriterPackType` [[WriterPackType]]
+
+Indicates the type of compression used for Value Change data.
+
+[options="header,autowidth"]
+|===
+| Name               | Value          | Description
+| `FST_WR_PT_ZLIB`   | `'!'` or `'Z'` | Compressed with ZLib
+| `FST_WR_PT_FASTLZ` | `'F'`          | Compressed with https://github.com/ariya/FastLZ[FastLZ]
+| `FST_WR_PT_LZ4`    | `'4'`          | Compressed with LZ4
+|===
+
+The GtkWave reader code assumes ZLib if an unknown value is found.
+
+=== `FileType` [[FileType]]
+
+This is the type of source that was used to generate the signals. The default is `FST_FT_VERILOG`. For informational purposes only; it has no effect on reading the file.
+
+[options="header,autowidth"]
+|===
+| Name                  | Value
+| `FST_FT_VERILOG`      | 0
+| `FST_FT_VHDL`         | 1
+| `FST_FT_VERILOG_VHDL` | 2
+|===
+
+=== `ScopeType` [[ScopeType]]
+
+[options="header,autowidth"]
+|===
+| Name                       | Value
+| `FST_ST_VCD_MODULE`        | 0
+| `FST_ST_VCD_TASK`          | 1
+| `FST_ST_VCD_FUNCTION`      | 2
+| `FST_ST_VCD_BEGIN`         | 3
+| `FST_ST_VCD_FORK`          | 4
+| `FST_ST_VCD_GENERATE`      | 5
+| `FST_ST_VCD_STRUCT`        | 6
+| `FST_ST_VCD_UNION`         | 7
+| `FST_ST_VCD_CLASS`         | 8
+| `FST_ST_VCD_INTERFACE`     | 9
+| `FST_ST_VCD_PACKAGE`       | 10
+| `FST_ST_VCD_PROGRAM`       | 11
+| `FST_ST_VHDL_ARCHITECTURE` | 12
+| `FST_ST_VHDL_PROCEDURE`    | 13
+| `FST_ST_VHDL_FUNCTION`     | 14
+| `FST_ST_VHDL_RECORD`       | 15
+| `FST_ST_VHDL_PROCESS`      | 16
+| `FST_ST_VHDL_BLOCK`        | 17
+| `FST_ST_VHDL_FOR_GENERATE` | 18
+| `FST_ST_VHDL_IF_GENERATE`  | 19
+| `FST_ST_VHDL_GENERATE`     | 20
+| `FST_ST_VHDL_PACKAGE`      | 21
+| `FST_ST_GEN_ATTRBEGIN`     | 252
+| `FST_ST_GEN_ATTREND`       | 253
+| `FST_ST_VCD_SCOPE`         | 254
+| `FST_ST_VCD_UPSCOPE`       | 25
+|===
+
+=== `VarType` [[VarType]]
+
+[options="header,autowidth"]
+|===
+| Name                         | Value | Notes
+| `FST_VT_VCD_EVENT`           | 0     |
+| `FST_VT_VCD_INTEGER`         | 1     |
+| `FST_VT_VCD_PARAMETER`       | 2     |
+| `FST_VT_VCD_REAL`            | 3     |
+| `FST_VT_VCD_REAL_PARAMETER`  | 4     |
+| `FST_VT_VCD_REG`             | 5     |
+| `FST_VT_VCD_SUPPLY0`         | 6     |
+| `FST_VT_VCD_SUPPLY1`         | 7     |
+| `FST_VT_VCD_TIME`            | 8     |
+| `FST_VT_VCD_TRI`             | 9     |
+| `FST_VT_VCD_TRIAND`          | 10    |
+| `FST_VT_VCD_TRIOR`           | 11    |
+| `FST_VT_VCD_TRIREG`          | 12    |
+| `FST_VT_VCD_TRI0`            | 13    |
+| `FST_VT_VCD_TRI1`            | 14    |
+| `FST_VT_VCD_WAND`            | 15    |
+| `FST_VT_VCD_WIRE`            | 16    |
+| `FST_VT_VCD_WOR`             | 17    |
+| `FST_VT_VCD_PORT`            | 18    |
+// TODO: Code says "used to define the rownum (index) port for a sparse array"
+| `FST_VT_VCD_SPARRAY`         | 19    |
+| `FST_VT_VCD_REALTIME`        | 20    |
+// TODO: Code says "generic string type   (max len is defined dynamically via fstWriterEmitVariableLengthValueChange)"
+| `FST_VT_GEN_STRING`          | 21    |
+| `FST_VT_SV_BIT`              | 22    |
+| `FST_VT_SV_LOGIC`            | 23    |
+| `FST_VT_SV_INT`              | 24    | 32-bit value
+| `FST_VT_SV_SHORTINT`         | 25    | 16-bit value
+| `FST_VT_SV_LONGINT`          | 26    | 64-bit value
+| `FST_VT_SV_BYTE`             | 27    | 8-bit value
+// TODO: Code says "declare as appropriate type range"
+| `FST_VT_SV_ENUM`             | 28    |
+// TODO: Code says "declare and emit same as FST_VT_VCD_REAL (needs to be emitted as double, not a float)"
+| `FST_VT_SV_SHORTREAL`        | 29    |
+|===
+
+=== `VarDir` [[VarDir]]
+
+[options="header,autowidth"]
+|===
+| Name              | Value
+| `FST_VD_IMPLICIT` | 0
+| `FST_VD_INPUT`    | 1
+| `FST_VD_OUTPUT`   | 2
+| `FST_VD_INOUT`    | 3
+| `FST_VD_BUFFER`   | 4
+| `FST_VD_LINKAGE`  | 5
+|===
+
+=== `AttrType` [[AttrType]]
+
+[options="header,autowidth"]
+|===
+| Name           | Value | Notes
+| `FST_AT_MISC`  | 0     | This type does not have a matching `FST_ST_GEN_ATTREND`.
+| `FST_AT_ARRAY` | 1     |
+| `FST_AT_ENUM`  | 2     |
+| `FST_AT_PACK`  | 3     |
+|===
+
+=== `MiscType` [[MiscType]]
+
+[options="header,autowidth"]
+|===
+| Name                 | Value
+| `FST_MT_COMMENT`     | 0
+| `FST_MT_ENVVAR`      | 1
+| `FST_MT_SUPVAR`      | 2
+| `FST_MT_PATHNAME`    | 3
+| `FST_MT_SOURCESTEM`  | 4
+| `FST_MT_SOURCEISTEM` | 5
+| `FST_MT_VALUELIST`   | 6
+| `FST_MT_ENUMTABLE`   | 7
+| `FST_MT_UNKNOWN`     | 8
+|===
+
+=== `ArrayType` [[ArrayType]]
+
+[options="header,autowidth"]
+|===
+| Name              | Value
+| `FST_AR_NONE`     | 0
+| `FST_AR_UNPACKED` | 1
+| `FST_AR_PACKED`   | 2
+| `FST_AR_SPARSE`   | 3
+|===
+
+=== `EnumValueType` [[EnumValueType]]
+
+[options="header,autowidth"]
+|===
+| Name                          | Value
+| `FST_EV_SV_INTEGER`           | 0
+| `FST_EV_SV_BIT`               | 1
+| `FST_EV_SV_LOGIC`             | 2
+| `FST_EV_SV_INT`               | 3
+| `FST_EV_SV_SHORTINT`          | 4
+| `FST_EV_SV_LONGINT`           | 5
+| `FST_EV_SV_BYTE`              | 6
+| `FST_EV_SV_UNSIGNED_INTEGER`  | 7
+| `FST_EV_SV_UNSIGNED_BIT`      | 8
+| `FST_EV_SV_UNSIGNED_LOGIC`    | 9
+| `FST_EV_SV_UNSIGNED_INT`      | 10
+| `FST_EV_SV_UNSIGNED_SHORTINT` | 11
+| `FST_EV_SV_UNSIGNED_LONGINT`  | 12
+| `FST_EV_SV_UNSIGNED_BYTE`     | 13
+| `FST_EV_REG`                  | 14
+| `FST_EV_TIME`                 | 15
+|===
+
+=== `PackType` [[PackType]]
+
+[options="header,autowidth"]
+|===
+| Name                    | Value
+| `FST_PT_NONE`           | 0
+| `FST_PT_UNPACKED`       | 1
+| `FST_PT_PACKED`         | 2
+| `FST_PT_TAGGED_PACKED`  | 3
+|===
+
+=== `SupplementalVarType` [[SupplementalVarType]]
+
+[options="header,autowidth"]
+|===
+| Name                    | Value
+| `FST_SVT_NONE`          | 0
+| `FST_SVT_VHDL_SIGNAL`   | 1
+| `FST_SVT_VHDL_VARIABLE` | 2
+| `FST_SVT_VHDL_CONSTANT` | 3
+| `FST_SVT_VHDL_FILE`     | 4
+| `FST_SVT_VHDL_MEMORY`   | 5
+|===
+
+=== `SupplementalDataType` [[SupplementalDataType]]
+
+[options="header,autowidth"]
+|===
+| Name                             | Value
+| `FST_SDT_NONE`                   | 0
+| `FST_SDT_VHDL_BOOLEAN`           | 1
+| `FST_SDT_VHDL_BIT`               | 2
+| `FST_SDT_VHDL_BIT_VECTOR`        | 3
+| `FST_SDT_VHDL_STD_ULOGIC`        | 4
+| `FST_SDT_VHDL_STD_ULOGIC_VECTOR` | 5
+| `FST_SDT_VHDL_STD_LOGIC`         | 6
+| `FST_SDT_VHDL_STD_LOGIC_VECTOR`  | 7
+| `FST_SDT_VHDL_UNSIGNED`          | 8
+| `FST_SDT_VHDL_SIGNED`            | 9
+| `FST_SDT_VHDL_INTEGER`           | 10
+| `FST_SDT_VHDL_REAL`              | 11
+| `FST_SDT_VHDL_NATURAL`           | 12
+| `FST_SDT_VHDL_POSITIVE`          | 13
+| `FST_SDT_VHDL_TIME`              | 14
+| `FST_SDT_VHDL_CHARACTER`         | 15
+| `FST_SDT_VHDL_STRING`            | 16
+|===
+
+[comment]
+--
+// TODO: Finish writing this.
+== History of Formats
+
+Sources:
+
+* Introduction section of https://gtkwave.sourceforge.net/gtkwave.pdf[the GtkWave User guide.]
+* https://github.com/gtkwave/gtkwave/issues/122#issuecomment-1326146942[This comment.]
+
+=== VCD
+
+Value Change Dump is the original and the worst format, but it is also the only universally supported one with a public specification (found in Section 21.7 of the SystemVerilog LRM). Files are encoded using ASCII, something like this:
+
+---
+#270
+b00000000000000000000000000011011 .g
+b0000 ;h
+0<h
+0=h
+0>h
+0?h
+b0000000000000000 @h
+0Ah
+0Bh
+#275
+b00000000000000000000000000000000 v
+b00000000000000000000010101010101 +!
+b0000000000000000000000000001000 .!
+b0000000000000000000000000001010 /!
+b01111100000000001001000001110011 7!
+b11010000010110000000000110110111 8!
+b0000000000000000000000000001100 9!
+---
+
+Each line starting with `#` is a timestamp. Each other line encodes the value of one signal. The names at the end (e.g. `.g`) are a base-94 encoding of the variable IDs. For single-bit variables the space between the value and ID is omitted, so `0<h` sets variable `<h` to `0`.
+
+Clearly this is about the least efficient format you could come up with.
+
+=== LXT
+
+=== LXT2
+
+=== VZT
+
+=== GHW
+
+=== AET2
+
+=== IDX
+
+=== FST
+
+=== VPD
+
+=== WLF
+
+Wave Log Format - used by Mentor's (now owned by Siemens) Questa and ModelSim simulators. It can record transactions as well as signals.
+
+=== FSDB
+
+Synopsys's format used by VCS. Instead of `$dumpvars` you can run `$fsdbDumpvars`. Synopsys also provides a `vcd2fsdb` utility to convert from VCD files.
+
+FSDB can record the sequence of signal changes (i.e. delta cycles), and can contain multiple design hiearchies. It cannot record transactions.
+
+=== SHM
+
+Cadance's format used by Xcelium. Stands for Simulation History Manager.
+--
+
+== Suggestions for FST2
+
+While working on this specification I found a number of things that are a bit weird and could be improved. Here are some suggestions for FST2 (if it ever exists):
+
+1. The file format needs a magic number to help identify it, and ideally a major version number. These can be combined, e.g. the file can start with `FST2`, `FST3`, etc.
+2. Little Endian should be used everywhere. Modern computers are all Little Endian. The cost of endianness conversion may be small but the cognative overload of having to convert values everywhere is not. Code would be vastly simplified if it just did not need to worry about this.
+3. Similarly it should use a more standard varint representation. Protobuf's zigzag encoding for signed varints is easier to deal with than LEB128's.
+4. There are way too many compression formats supported. It should probably just support one or two - probably LZ4 and maybe ZStd.
+5. It may also be worth using prefix varints or grouped varints.
+6. Strings should use (length, data) instead of null termination.
+7. The Value Change block puts the lengths of all its tables at various weird places between them. They're all mandatory. Just put their lengths all in one place in the block header.
+8. You have to decode the whole Position Table even if you are only interested in a few variables. It would be good to solve that and ideally get rid of the complicated encoding scheme for it.
+9. The format does not include a way to store delta cycles, or order changes at the same time step. These can be really helpful for debugging.
+10. It also cannot record transactions.
