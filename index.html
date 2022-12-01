@@ -958,7 +958,7 @@ I didn’t create the FST format so there may be errors in this specification. I
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a id="header_real_endianness"></a><code>header_real_endianness</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">25</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>f64</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">The value <em>e</em> (2.7182818284590452354). This is used as an endianness test for reals. See <a href="#_endianness">Endianness</a>.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The value <em>e</em> (2.7182818284590452354). This is used as an endianness test for reals. See <a href="#_endianness">Endianness</a>. This number can also be used as a magic number to check if a file is an FST file.</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a id="header_writer_memory_use"></a><code>header_writer_memory_use</code></p></td>
@@ -2733,7 +2733,7 @@ I didn’t create the FST format so there may be errors in this specification. I
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>The file format needs a magic number to help identify it, and ideally a major version number. These can be combined, e.g. the file can start with <code>FST2</code>, <code>FST3</code>, etc.</p>
+<p><a href="#header_real_endianness"><code>header_real_endianness</code></a> can be used as a magic number to identify files but it would be better to use a more traditional one at the start of the file, ideally including a major version number. These can be combined, e.g. the file can start with <code>FST2</code>, <code>FST3</code>, etc.</p>
 </li>
 <li>
 <p>Little Endian should be used everywhere. Modern computers are all Little Endian. The cost of endianness conversion may be small but the cognative overload of having to convert values everywhere is not. Code would be vastly simplified if it just did not need to worry about this.</p>
@@ -2769,7 +2769,7 @@ I didn’t create the FST format so there may be errors in this specification. I
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2022-11-30 20:53:44 UTC
+Last updated 2022-12-01 12:12:01 UTC
 </div>
 </div>
 </body>

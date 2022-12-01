@@ -178,7 +178,7 @@ An FST file always starts with a header block. There is no magic number before i
 | [[header_block_length,`header_block_length`]]`header_block_length`                | 1      | `u64`     | Block length.
 | [[header_start_time,`header_start_time`]]`header_start_time`                      | 9      | `u64`     | Start time of the file. Units are given by <<header_timescale>>.
 | [[header_end_time,`header_end_time`]]`header_end_time`                            | 17     | `u64`     | End time of the file.
-| [[header_real_endianness,`header_real_endianness`]]`header_real_endianness`       | 25     | `f64`     | The value _e_ (2.7182818284590452354). This is used as an endianness test for reals. See <<Endianness>>.
+| [[header_real_endianness,`header_real_endianness`]]`header_real_endianness`       | 25     | `f64`     | The value _e_ (2.7182818284590452354). This is used as an endianness test for reals. See <<Endianness>>. This number can also be used as a magic number to check if a file is an FST file.
 | [[header_writer_memory_use,`header_writer_memory_use`]]`header_writer_memory_use` | 33     | `u64`     | Memory used when writing this file in bytes. For informational purposes.
 | [[header_num_scopes,`header_num_scopes`]]`header_num_scopes`                      | 41     | `u64`     | Number of scopes (`FST_ST_VCD_SCOPE` entries in the hierarchy).
 | [[header_num_hiearchy_vars,`header_num_hiearchy_vars`]]`header_num_hiearchy_vars` | 49     | `u64`     | Number of variables in the hierarchy.
@@ -793,7 +793,7 @@ Cadance's format used by Xcelium. Stands for Simulation History Manager.
 
 While working on this specification I found a number of things that are a bit weird and could be improved. Here are some suggestions for FST2 (if it ever exists):
 
-1. The file format needs a magic number to help identify it, and ideally a major version number. These can be combined, e.g. the file can start with `FST2`, `FST3`, etc.
+1. <<header_real_endianness>> can be used as a magic number to identify files but it would be better to use a more traditional one at the start of the file, ideally including a major version number. These can be combined, e.g. the file can start with `FST2`, `FST3`, etc.
 2. Little Endian should be used everywhere. Modern computers are all Little Endian. The cost of endianness conversion may be small but the cognative overload of having to convert values everywhere is not. Code would be vastly simplified if it just did not need to worry about this.
 3. Similarly it should use a more standard varint representation. Protobuf's zigzag encoding for signed varints is easier to deal with than LEB128's.
 4. There are way too many compression formats supported. It should probably just support one or two - probably LZ4 and maybe ZStd.
