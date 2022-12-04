@@ -6,6 +6,8 @@ Tim Hutt
 
 == Introduction
 
+WARNING: This is an incomplete draft! Also I didn’t create the FST format so there may be errors in this specification. If you find any please let me know.
+
 The only standard format for storing digital waveforms from HDL simulations is https://en.wikipedia.org/wiki/Value_change_dump[VCD] (Value Change Dump). Unfortunately it’s an ancient and hilariously inefficient text based format. It’s really only suitable for tiny projects. As a result most commercial EDA vendors use their own more efficient proprietary formats, for example Synopsys's VCS simulator uses FSDB (Fast Signal DataBase) and Mentor's Questa simulator uses WLF (Wave Log Format).
 
 .GtkWave displaying some digital waveforms. The design hierarchy is shown in the top left corner.
@@ -17,8 +19,6 @@ Unfortunately these formats are all proprietary, therefore the https://github.co
 // TODO: Finish writing that. It requires more research.
 
 Unfortunately there is no official specification for FST, so I wrote this one based on reading https://github.com/gtkwave/gtkwave/blob/c98739bfeb663ba2d695165759dbdf850f0147ab/gtkwave4/src/helpers/fst/[the GtkWave FST source code].
-
-WARNING: I didn’t create the FST format so there may be errors in this specification. If you find any please let me know.
 
 == Format Overview
 
@@ -175,7 +175,7 @@ An FST file always starts with a header block. There is no magic number before i
 |===
 | Name                                                                              | Offset | Type      | Description
 | [[header_block_type,`header_block_type`]]`header_block_type`                      | 0      | `u8`      | Block type (<<FST_BL_HDR>>).
-| [[header_block_length,`header_block_length`]]`header_block_length`                | 1      | `u64`     | Block length.
+| [[header_block_length,`header_block_length`]]`header_block_length`                | 1      | `u64`     | Block length (329).
 | [[header_start_time,`header_start_time`]]`header_start_time`                      | 9      | `u64`     | Start time of the file. Units are given by <<header_timescale>>.
 | [[header_end_time,`header_end_time`]]`header_end_time`                            | 17     | `u64`     | End time of the file.
 | [[header_real_endianness,`header_real_endianness`]]`header_real_endianness`       | 25     | `f64`     | The value _e_ (2.7182818284590452354). This is used as an endianness test for reals. See <<Endianness>>. This number can also be used as a magic number to check if a file is an FST file.
@@ -333,6 +333,10 @@ It contains four tables - the bits array, waves table, position table and time t
 ==== Bits Array
 
 The bits array stores the value of all signals at <<vc_start_time>>. <<vc_bits_data>> contains the value of each signal concatenated. The length of each is signal (in bits) is given in the <<Geometry Block>>. Variable length records are not stored because they have no state. Reals are stored as `f64` (`f32` is never used even if that is the actual datatype in the simulation).
+
+The Bits Array is optionally compressed with ZLib.
+
+// TODO: "Bits Array" is not a very good name.
 
 // TODO: How are values encoded?
 
