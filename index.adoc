@@ -805,5 +805,7 @@ While working on this specification I found a number of things that are a bit we
 6. Strings should use (length, data) instead of null termination.
 7. The Value Change block puts the lengths of all its tables at various weird places between them. They're all mandatory. Just put their lengths all in one place in the block header.
 8. You have to decode the whole Position Table even if you are only interested in a few variables. It would be good to solve that and ideally get rid of the complicated encoding scheme for it.
-9. The format does not include a way to store delta cycles, or order changes at the same time step. These can be really helpful for debugging.
-10. It also cannot record transactions.
+9. You have to decode the whole Bits Array even if you are only interested in a few variables.
+10. The format does not include a way to store delta cycles, or order changes at the same time step. These can be really helpful for debugging.
+11. It also cannot record transactions.
+12. Different simulators support different value types. E.g. Verilator only outputs 0 and 1, VCS outputs 0, 1, X, Z, etc. It would be helpful if there was a field in the header block that indicated which values would be encountered. This allows readers to use an efficient in-memory representation of the wave data.
