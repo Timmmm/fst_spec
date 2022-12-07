@@ -3,6 +3,7 @@ Tim Hutt
 :description: Specification of the FST digital waveform file format.
 :stylesheet: style.css
 :toc: left
+:toclevels: 3
 
 == Introduction
 
