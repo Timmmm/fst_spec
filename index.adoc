@@ -55,7 +55,7 @@ Most types have a defined Endianness (unfortunately Big Endian), however `f64` i
 
 === Varints
 
-Varints are encoded similarly to the https://en.wikipedia.org/wiki/LEB128[LEB128 format] but Big Endian instead of Little and only up to 64 bits. In short, the upper big of each byte indicates whether it is the last byte in the varint (1=not last byte, 0=last byte). Then the bits of the number are spread over the lower 7 bits of each byte in Big Endian order (the last byte in the `varint` contains the 7 lowest bits in the encoded number).
+Varints are encoded using the https://en.wikipedia.org/wiki/LEB128[LEB128 format] but up to 64 bits instead of 128. In short, the upper bit of each byte indicates whether it is the last byte in the varint (1=not last byte, 0=last byte). Then the bits of the number are spread over the lower 7 bits of each byte in Little Endian order (the first byte in the `varint` contains the 7 lowest bits in the encoded number).
 
 .The unsigned `varint` format used by FST.
 image::varint.drawio.svg[align="center",opts="inline"]
@@ -332,13 +332,11 @@ It contains four tables - the bits array, waves table, position table and time t
 
 ==== Bits Array
 
-The bits array stores the value of all signals at <<vc_start_time>>. <<vc_bits_data>> contains the value of each signal concatenated. The length of each is signal (in bits) is given in the <<Geometry Block>>. Variable length records are not stored because they have no state. Reals are stored as `f64` (`f32` is never used even if that is the actual datatype in the simulation).
+The bits array stores the value of all signals at <<vc_start_time>>. <<vc_bits_data>> contains the value of each signal concatenated. The length of each is signal (in bits) is given in the <<Geometry Block>>. All values are stored using the ASCII encoding (`0`, `1`, `X`, `Z`, etc.) with one bit per byte. Variable length records are not stored because they have no state. Reals are stored as Native Endian `f64` (`f32` is never used even if that is the actual datatype in the simulation). It is unclear how reals with `X` bits are stored.
 
-The Bits Array is optionally compressed with ZLib.
+The Bits Array is optionally compressed with ZLib (if <<vc_bits_uncompressed_length>> and <<vc_bits_compressed_length>> are unequal).
 
 // TODO: "Bits Array" is not a very good name.
-
-// TODO: How are values encoded?
 
 ==== Waves Table
 
@@ -390,7 +388,7 @@ The rules for `FST_VT_VCD_REAL` are slightly different:
 
 ==== Position Table
 
-This contains pointers into the value change data for each variable to allow deduplicating them. The pointers for each variable are decoded from the Position Table data in different ways depending on the Block Type.
+This contains pointers into the value change data for each variable to allow deduplicating them. There are <<header_num_vars>> entries in the table. The pointers for each variable are decoded from the Position Table data in different ways depending on the Block Type.
 
 *FST_BL_VCDATA_DYN_ALIAS2*
 
@@ -428,10 +426,8 @@ Those numbers are then encoded as follows.
 
 * A run of 1 or more 0's (i.e. any length of 0's) are encoded as a `varint` equal to `run_length << 1`.
 * All other values are encoded as an `svarint` equal to `value << 1 | 1` where `value` is:
-    * 0 if it is a dynamic alias that matches the previous dynamic alias (as in the second -3 here).
-    * If negative: equal to the negative value.
-    * If positive: equal to the delta from the previous positive value.
-    *  The exception is if a dynamic alias matches the previous dynamic alias (as in the second `-3` here). Then it is encoded as `0 << 1 | 1` (i.e. `1`).
+    * If negative: 0 if it matches the previous negative value, otherwise the negative value itself.
+    * If positive: The delta from the previous positive value.
 
 So the above values would be encoded as:
 
@@ -457,13 +453,15 @@ This uses a slightly different encoding to the above scheme.
 
 ==== Time Table
 
-The Time Table data is a series of `varint`s that encode the time differences between simulation times when a value changes. For instance if value changes occur at these times:
+The Time Table data is an array of <<vc_time_count>> ``varint``s that encode the time differences between simulation times when a value changes. For instance if value changes occur at these times:
 
     10, 50, 100, 101
 
 Then the Time Table data contains these `varint`s:
 
     10, 40, 50, 1
+
+The array is compressed with ZLib if <<vc_compressed_length>> and <<vc_uncompressed_length>> are not equal.
 
 === Blackout Block
 
@@ -799,7 +797,7 @@ While working on this specification I found a number of things that are a bit we
 
 1. <<header_real_endianness>> can be used as a magic number to identify files but it would be better to use a more traditional one at the start of the file, ideally including a major version number. These can be combined, e.g. the file can start with `FST2`, `FST3`, etc.
 2. Little Endian should be used everywhere. Modern computers are all Little Endian. The cost of endianness conversion may be small but the cognative overload of having to convert values everywhere is not. Code would be vastly simplified if it just did not need to worry about this.
-3. Similarly it should use a more standard varint representation. Protobuf's zigzag encoding for signed varints is easier to deal with than LEB128's.
+3. Protobuf's zigzag encoding for signed varints is much easier to deal with than LEB128's.
 4. There are way too many compression formats supported. It should probably just support one or two - probably LZ4 and maybe ZStd.
 5. It may also be worth using prefix varints or grouped varints.
 6. Strings should use (length, data) instead of null termination.
