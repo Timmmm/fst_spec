@@ -318,12 +318,12 @@ These blocks store the actual variable data. Each block stores the waveforms of 
 | [[vc_bits_compressed_length,`vc_bits_compressed_length`]]`vc_bits_compressed_length`       | -      | `varint` | Compressed length (equal to the uncompressed length if no compression).
 | [[vc_bits_count,`vc_bits_count`]]`vc_bits_count`                                           | -      | `varint` | Number of entries in the bits table.
 | [[vc_bits_data,`vc_bits_data`]]`vc_bits_data`                                              | -      | -        | Bits Array data. Compressed with ZLib if the compressed and uncompressed lengths differ.
-| [[vc_waves_count,`vc_waves_count`]]`vc_waves_count`                                        | 0      | `varint` | Number of waveforms in the waves table.
+| [[vc_waves_count,`vc_waves_count`]]`vc_waves_count`                                        | -      | `varint` | Number of waveforms in the waves table.
 | [[vc_waves_packtype,`vc_waves_packtype`]]`vc_waves_packtype`                               | -      | `u8`     | Compression type used for <<vc_waves_data>> entries (see <<WriterPackType>>).
 | [[vc_waves_data,`vc_waves_data`]]`vc_waves_data`                                           | -      | -        | Set of deduplicated waveforms for this time period.
-| [[vc_position_data,`vc_position_data`]]`vc_position_data`                                  | 0      | -        | Position Table data, encoded as described below.
+| [[vc_position_data,`vc_position_data`]]`vc_position_data`                                  | -      | -        | Position Table data, encoded as described below.
 | [[vc_position_length,`vc_position_length`]]`vc_position_length`                            | -      | `u64`    | Length of `vc_position_data`.
-| [[vc_time_data,`vc_time_data`]]`vc_time_data`                                              | 0      | -        | Time Table data. Compressed with ZLib.
+| [[vc_time_data,`vc_time_data`]]`vc_time_data`                                              | -      | -        | Time Table data. Compressed with ZLib.
 | [[vc_time_uncompressed_length,`vc_time_uncompressed_length`]]`vc_time_uncompressed_length` | -      | `u64`    | Uncompressed length of time table.
 | [[vc_time_compressed_length,`vc_time_compressed_length`]]`vc_time_compressed_length`       | -      | `u64`    | Compressed length of time table (equal to uncompressed length if there’s no compression).
 | [[vc_time_count,`vc_time_count`]]`vc_time_count`                                           | -      | `u64`    | Number of items in the time table.
