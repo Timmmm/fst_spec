@@ -352,30 +352,32 @@ The data consists of <<vc_waves_count>> of the following:
 | [[vc_waves_values,`vc_waves_values`]]`vc_waves_values` | -      | -        | Wave data. Compression type is given by <<vc_waves_packtype>> (unless <<vc_waves_length>> is 0 in which case it is uncompressed).
 |===
 
-The data that is stored is a series of (_time_delta_, _value_) pairs. The _time_delta_ encodes an index into the <<Time Table>> (it is the delta from the previous index). The data pair is encoded differently depending on the variable type and length.
+The data that is stored is a series of (_time_index_delta_, _value_) pairs. The _time_delta_ encodes an index into the <<Time Table>> (it is the delta from the previous index). The data pair is encoded differently depending on the variable type and length.
 
-If the variable is a 1-bit value (e.g. `logic` or `bit` in SystemVerilog) then the time_delta and value are encoded as a single `varint` depending on its value:
+If the variable is a 1-bit value (e.g. `logic` or `bit` in SystemVerilog) then the time_index_delta and value are encoded as a single `varint` depending on its value:
 
 [options="header,autowidth"]
 |===
 | Value | Varint Value
-| 0     | `time_delta << 2 \| 0 << 1 \| 0`
-| 1     | `time_delta << 2 \| 1 << 1 \| 0`
-| X     | `time_delta << 4 \| 0 << 1 \| 1`
-| Z     | `time_delta << 4 \| 1 << 1 \| 1`
-| H     | `time_delta << 4 \| 2 << 1 \| 1`
-| U     | `time_delta << 4 \| 3 << 1 \| 1`
-| W     | `time_delta << 4 \| 4 << 1 \| 1`
-| L     | `time_delta << 4 \| 5 << 1 \| 1`
-| -     | `time_delta << 4 \| 6 << 1 \| 1`
-| ?     | `time_delta << 4 \| 7 << 1 \| 1`
+| 0     | `time_index_delta << 2 \| 0 << 1 \| 0`
+| 1     | `time_index_delta << 2 \| 1 << 1 \| 0`
+| X     | `time_index_delta << 4 \| 0 << 1 \| 1`
+| Z     | `time_index_delta << 4 \| 1 << 1 \| 1`
+| H     | `time_index_delta << 4 \| 2 << 1 \| 1`
+| U     | `time_index_delta << 4 \| 3 << 1 \| 1`
+| W     | `time_index_delta << 4 \| 4 << 1 \| 1`
+| L     | `time_index_delta << 4 \| 5 << 1 \| 1`
+| -     | `time_index_delta << 4 \| 6 << 1 \| 1`
+| ?     | `time_index_delta << 4 \| 7 << 1 \| 1`
 |===
 
 SystemVerilog uses 0, 1, X and Z. VHDL can use all values. See https://en.wikipedia.org/wiki/IEEE_1164
 
-The lowest bit indicates whether the value is 0/1 or not. 0 and 1 are encoded in a slightly more efficient way than the other values since they are so much more common. If the variable is *not* a 1-bit value then the `time_delta` is encoded as its own `varint` together with an encoding mode bit:
+The lowest bit indicates whether the value is 0/1 or not. 0 and 1 are encoded in a slightly more efficient way than the other values since they are so much more common.
 
-    time_delta << 1 | all_binary
+If the variable is *not* a 1-bit value then the `time_index_delta` is encoded as its own `varint` together with an encoding mode bit:
+
+    time_index_delta << 1 | all_binary
 
 If `all_binary` is 1 then this means the value only contains 0's or 1's. There are no X's, Z's and so on. In this case the values are encoded as raw bits packed into a whole number of bytes.
 
