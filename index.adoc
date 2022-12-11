@@ -214,7 +214,7 @@ The `hierarchy_data` compression method is given by `hierarchy_type` as follows:
 | Block Type             | Compression
 | <<FST_BL_HIER>>        | GZip
 | <<FST_BL_HIER_LZ4>>    | LZ4
-| <<FST_BL_HIER_LZ4DUO>> | LZ4 applied twice.
+| <<FST_BL_HIER_LZ4DUO>> | LZ4 applied twice. The GtkWave code uses this if the hierarchy data is more than 4{nbsp}MB.
 |===
 
 The field `hiearchy_compressed_once_length` is only present if the block type is `FST_BL_HIER_LZ4DUO`. It records the length of the data after one application of LZ4.
