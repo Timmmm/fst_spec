@@ -1114,7 +1114,7 @@ This is an incomplete draft! Also I didn’t create the FST format so there may 
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#FST_BL_HIER_LZ4DUO"><code>FST_BL_HIER_LZ4DUO</code></a></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">LZ4 applied twice.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">LZ4 applied twice. The GtkWave code uses this if the hierarchy data is more than 4&#160;MB.</p></td>
 </tr>
 </tbody>
 </table>
@@ -1130,16 +1130,16 @@ This is an incomplete draft! Also I didn’t create the FST format so there may 
 <div class="ulist">
 <ul>
 <li>
-<p><code>FST_ST_GEN_ATTRBEGIN</code></p>
+<p><a href="#FST_ST_GEN_ATTRBEGIN"><code>FST_ST_GEN_ATTRBEGIN</code></a></p>
 </li>
 <li>
-<p><code>FST_ST_GEN_ATTREND</code></p>
+<p><a href="#FST_ST_GEN_ATTREND"><code>FST_ST_GEN_ATTREND</code></a></p>
 </li>
 <li>
-<p><code>FST_ST_VCD_SCOPE</code></p>
+<p><a href="#FST_ST_VCD_SCOPE"><code>FST_ST_VCD_SCOPE</code></a></p>
 </li>
 <li>
-<p><code>FST_ST_VCD_UPSCOPE</code></p>
+<p><a href="#FST_ST_VCD_UPSCOPE"><code>FST_ST_VCD_UPSCOPE</code></a></p>
 </li>
 <li>
 <p><code>FST_VT_VCD_*</code> (<a href="#VarType"><code>VarType</code></a>)</p>
@@ -1524,10 +1524,10 @@ This is an incomplete draft! Also I didn’t create the FST format so there may 
 </tbody>
 </table>
 <div class="paragraph">
-<p>The data that is stored is a series of (<em>time_delta</em>, <em>value</em>) pairs. The <em>time_delta</em> encodes an index into the <a href="#_time_table">Time Table</a> (it is the delta from the previous index). The data pair is encoded differently depending on the variable type and length.</p>
+<p>The data that is stored is a series of (<em>time_index_delta</em>, <em>value</em>) pairs. The <em>time_delta</em> encodes an index into the <a href="#_time_table">Time Table</a> (it is the delta from the previous index). The data pair is encoded differently depending on the variable type and length.</p>
 </div>
 <div class="paragraph">
-<p>If the variable is a 1-bit value (e.g. <code>logic</code> or <code>bit</code> in SystemVerilog) then the time_delta and value are encoded as a single <code>varint</code> depending on its value:</p>
+<p>If the variable is a 1-bit value (e.g. <code>logic</code> or <code>bit</code> in SystemVerilog) then the time_index_delta and value are encoded as a single <code>varint</code> depending on its value:</p>
 </div>
 <table class="tableblock frame-all grid-all fit-content">
 <colgroup>
@@ -1543,43 +1543,43 @@ This is an incomplete draft! Also I didn’t create the FST format so there may 
 <tbody>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>time_delta &lt;&lt; 2 | 0 &lt;&lt; 1 | 0</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>time_index_delta &lt;&lt; 2 | 0 &lt;&lt; 1 | 0</code></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">1</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>time_delta &lt;&lt; 2 | 1 &lt;&lt; 1 | 0</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>time_index_delta &lt;&lt; 2 | 1 &lt;&lt; 1 | 0</code></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">X</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>time_delta &lt;&lt; 4 | 0 &lt;&lt; 1 | 1</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>time_index_delta &lt;&lt; 4 | 0 &lt;&lt; 1 | 1</code></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Z</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>time_delta &lt;&lt; 4 | 1 &lt;&lt; 1 | 1</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>time_index_delta &lt;&lt; 4 | 1 &lt;&lt; 1 | 1</code></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">H</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>time_delta &lt;&lt; 4 | 2 &lt;&lt; 1 | 1</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>time_index_delta &lt;&lt; 4 | 2 &lt;&lt; 1 | 1</code></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">U</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>time_delta &lt;&lt; 4 | 3 &lt;&lt; 1 | 1</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>time_index_delta &lt;&lt; 4 | 3 &lt;&lt; 1 | 1</code></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">W</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>time_delta &lt;&lt; 4 | 4 &lt;&lt; 1 | 1</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>time_index_delta &lt;&lt; 4 | 4 &lt;&lt; 1 | 1</code></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">L</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>time_delta &lt;&lt; 4 | 5 &lt;&lt; 1 | 1</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>time_index_delta &lt;&lt; 4 | 5 &lt;&lt; 1 | 1</code></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>time_delta &lt;&lt; 4 | 6 &lt;&lt; 1 | 1</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>time_index_delta &lt;&lt; 4 | 6 &lt;&lt; 1 | 1</code></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">?</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>time_delta &lt;&lt; 4 | 7 &lt;&lt; 1 | 1</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>time_index_delta &lt;&lt; 4 | 7 &lt;&lt; 1 | 1</code></p></td>
 </tr>
 </tbody>
 </table>
@@ -1587,11 +1587,14 @@ This is an incomplete draft! Also I didn’t create the FST format so there may 
 <p>SystemVerilog uses 0, 1, X and Z. VHDL can use all values. See <a href="https://en.wikipedia.org/wiki/IEEE_1164" class="bare">https://en.wikipedia.org/wiki/IEEE_1164</a></p>
 </div>
 <div class="paragraph">
-<p>The lowest bit indicates whether the value is 0/1 or not. 0 and 1 are encoded in a slightly more efficient way than the other values since they are so much more common. If the variable is <strong>not</strong> a 1-bit value then the <code>time_delta</code> is encoded as its own <code>varint</code> together with an encoding mode bit:</p>
+<p>The lowest bit indicates whether the value is 0/1 or not. 0 and 1 are encoded in a slightly more efficient way than the other values since they are so much more common.</p>
+</div>
+<div class="paragraph">
+<p>If the variable is <strong>not</strong> a 1-bit value then the <code>time_index_delta</code> is encoded as its own <code>varint</code> together with an encoding mode bit:</p>
 </div>
 <div class="literalblock">
 <div class="content">
-<pre>time_delta &lt;&lt; 1 | all_binary</pre>
+<pre>time_index_delta &lt;&lt; 1 | all_binary</pre>
 </div>
 </div>
 <div class="paragraph">
@@ -2048,108 +2051,108 @@ This is an incomplete draft! Also I didn’t create the FST format so there may 
 </thead>
 <tbody>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>FST_ST_VCD_MODULE</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a id="FST_ST_VCD_MODULE"></a><code>FST_ST_VCD_MODULE</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>FST_ST_VCD_TASK</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a id="FST_ST_VCD_TASK"></a><code>FST_ST_VCD_TASK</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">1</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>FST_ST_VCD_FUNCTION</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a id="FST_ST_VCD_FUNCTION"></a><code>FST_ST_VCD_FUNCTION</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">2</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>FST_ST_VCD_BEGIN</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a id="FST_ST_VCD_BEGIN"></a><code>FST_ST_VCD_BEGIN</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">3</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>FST_ST_VCD_FORK</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a id="FST_ST_VCD_FORK"></a><code>FST_ST_VCD_FORK</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">4</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>FST_ST_VCD_GENERATE</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a id="FST_ST_VCD_GENERATE"></a><code>FST_ST_VCD_GENERATE</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">5</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>FST_ST_VCD_STRUCT</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a id="FST_ST_VCD_STRUCT"></a><code>FST_ST_VCD_STRUCT</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">6</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>FST_ST_VCD_UNION</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a id="FST_ST_VCD_UNION"></a><code>FST_ST_VCD_UNION</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">7</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>FST_ST_VCD_CLASS</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a id="FST_ST_VCD_CLASS"></a><code>FST_ST_VCD_CLASS</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">8</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>FST_ST_VCD_INTERFACE</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a id="FST_ST_VCD_INTERFACE"></a><code>FST_ST_VCD_INTERFACE</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">9</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>FST_ST_VCD_PACKAGE</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a id="FST_ST_VCD_PACKAGE"></a><code>FST_ST_VCD_PACKAGE</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">10</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>FST_ST_VCD_PROGRAM</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a id="FST_ST_VCD_PROGRAM"></a><code>FST_ST_VCD_PROGRAM</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">11</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>FST_ST_VHDL_ARCHITECTURE</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a id="FST_ST_VHDL_ARCHITECTURE"></a><code>FST_ST_VHDL_ARCHITECTURE</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">12</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>FST_ST_VHDL_PROCEDURE</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a id="FST_ST_VHDL_PROCEDURE"></a><code>FST_ST_VHDL_PROCEDURE</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">13</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>FST_ST_VHDL_FUNCTION</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a id="FST_ST_VHDL_FUNCTION"></a><code>FST_ST_VHDL_FUNCTION</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">14</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>FST_ST_VHDL_RECORD</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a id="FST_ST_VHDL_RECORD"></a><code>FST_ST_VHDL_RECORD</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">15</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>FST_ST_VHDL_PROCESS</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a id="FST_ST_VHDL_PROCESS"></a><code>FST_ST_VHDL_PROCESS</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">16</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>FST_ST_VHDL_BLOCK</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a id="FST_ST_VHDL_BLOCK"></a><code>FST_ST_VHDL_BLOCK</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">17</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>FST_ST_VHDL_FOR_GENERATE</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a id="FST_ST_VHDL_FOR_GENERATE"></a><code>FST_ST_VHDL_FOR_GENERATE</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">18</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>FST_ST_VHDL_IF_GENERATE</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a id="FST_ST_VHDL_IF_GENERATE"></a><code>FST_ST_VHDL_IF_GENERATE</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">19</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>FST_ST_VHDL_GENERATE</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a id="FST_ST_VHDL_GENERATE"></a><code>FST_ST_VHDL_GENERATE</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">20</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>FST_ST_VHDL_PACKAGE</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a id="FST_ST_VHDL_PACKAGE"></a><code>FST_ST_VHDL_PACKAGE</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">21</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>FST_ST_GEN_ATTRBEGIN</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a id="FST_ST_GEN_ATTRBEGIN"></a><code>FST_ST_GEN_ATTRBEGIN</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">252</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>FST_ST_GEN_ATTREND</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a id="FST_ST_GEN_ATTREND"></a><code>FST_ST_GEN_ATTREND</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">253</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>FST_ST_VCD_SCOPE</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a id="FST_ST_VCD_SCOPE"></a><code>FST_ST_VCD_SCOPE</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">254</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>FST_ST_VCD_UPSCOPE</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">25</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a id="FST_ST_VCD_UPSCOPE"></a><code>FST_ST_VCD_UPSCOPE</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">255</p></td>
 </tr>
 </tbody>
 </table>
@@ -2782,7 +2785,7 @@ This is an incomplete draft! Also I didn’t create the FST format so there may 
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2022-12-08 21:56:41 UTC
+Last updated 2023-01-08 21:56:10 UTC
 </div>
 </div>
 </body>

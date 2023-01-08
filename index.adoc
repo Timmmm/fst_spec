@@ -223,10 +223,10 @@ Note that unlike elsewhere, the compression is unconditional. You shouldn't chec
 
 After decompression the `hierarchy_data` is a list of tagged values. The tags are `u8` with the following values:
 
-* `FST_ST_GEN_ATTRBEGIN`
-* `FST_ST_GEN_ATTREND`
-* `FST_ST_VCD_SCOPE`
-* `FST_ST_VCD_UPSCOPE`
+* <<FST_ST_GEN_ATTRBEGIN>>
+* <<FST_ST_GEN_ATTREND>>
+* <<FST_ST_VCD_SCOPE>>
+* <<FST_ST_VCD_UPSCOPE>>
 * `FST_VT_VCD_*` (<<VarType>>)
 
 Each tag is followed by some variable length data. It _doesn’t_ include an explicit length field like TLV so you can’t skip entries without parsing them.
@@ -532,33 +532,33 @@ This is the type of source that was used to generate the signals. The default is
 
 [options="header,autowidth"]
 |===
-| Name                       | Value
-| `FST_ST_VCD_MODULE`        | 0
-| `FST_ST_VCD_TASK`          | 1
-| `FST_ST_VCD_FUNCTION`      | 2
-| `FST_ST_VCD_BEGIN`         | 3
-| `FST_ST_VCD_FORK`          | 4
-| `FST_ST_VCD_GENERATE`      | 5
-| `FST_ST_VCD_STRUCT`        | 6
-| `FST_ST_VCD_UNION`         | 7
-| `FST_ST_VCD_CLASS`         | 8
-| `FST_ST_VCD_INTERFACE`     | 9
-| `FST_ST_VCD_PACKAGE`       | 10
-| `FST_ST_VCD_PROGRAM`       | 11
-| `FST_ST_VHDL_ARCHITECTURE` | 12
-| `FST_ST_VHDL_PROCEDURE`    | 13
-| `FST_ST_VHDL_FUNCTION`     | 14
-| `FST_ST_VHDL_RECORD`       | 15
-| `FST_ST_VHDL_PROCESS`      | 16
-| `FST_ST_VHDL_BLOCK`        | 17
-| `FST_ST_VHDL_FOR_GENERATE` | 18
-| `FST_ST_VHDL_IF_GENERATE`  | 19
-| `FST_ST_VHDL_GENERATE`     | 20
-| `FST_ST_VHDL_PACKAGE`      | 21
-| `FST_ST_GEN_ATTRBEGIN`     | 252
-| `FST_ST_GEN_ATTREND`       | 253
-| `FST_ST_VCD_SCOPE`         | 254
-| `FST_ST_VCD_UPSCOPE`       | 25
+| Name                                                                              | Value
+| [[FST_ST_VCD_MODULE,`FST_ST_VCD_MODULE`]]`FST_ST_VCD_MODULE`                      | 0
+| [[FST_ST_VCD_TASK,`FST_ST_VCD_TASK`]]`FST_ST_VCD_TASK`                            | 1
+| [[FST_ST_VCD_FUNCTION,`FST_ST_VCD_FUNCTION`]]`FST_ST_VCD_FUNCTION`                | 2
+| [[FST_ST_VCD_BEGIN,`FST_ST_VCD_BEGIN`]]`FST_ST_VCD_BEGIN`                         | 3
+| [[FST_ST_VCD_FORK,`FST_ST_VCD_FORK`]]`FST_ST_VCD_FORK`                            | 4
+| [[FST_ST_VCD_GENERATE,`FST_ST_VCD_GENERATE`]]`FST_ST_VCD_GENERATE`                | 5
+| [[FST_ST_VCD_STRUCT,`FST_ST_VCD_STRUCT`]]`FST_ST_VCD_STRUCT`                      | 6
+| [[FST_ST_VCD_UNION,`FST_ST_VCD_UNION`]]`FST_ST_VCD_UNION`                         | 7
+| [[FST_ST_VCD_CLASS,`FST_ST_VCD_CLASS`]]`FST_ST_VCD_CLASS`                         | 8
+| [[FST_ST_VCD_INTERFACE,`FST_ST_VCD_INTERFACE`]]`FST_ST_VCD_INTERFACE`             | 9
+| [[FST_ST_VCD_PACKAGE,`FST_ST_VCD_PACKAGE`]]`FST_ST_VCD_PACKAGE`                   | 10
+| [[FST_ST_VCD_PROGRAM,`FST_ST_VCD_PROGRAM`]]`FST_ST_VCD_PROGRAM`                   | 11
+| [[FST_ST_VHDL_ARCHITECTURE,`FST_ST_VHDL_ARCHITECTURE`]]`FST_ST_VHDL_ARCHITECTURE` | 12
+| [[FST_ST_VHDL_PROCEDURE,`FST_ST_VHDL_PROCEDURE`]]`FST_ST_VHDL_PROCEDURE`          | 13
+| [[FST_ST_VHDL_FUNCTION,`FST_ST_VHDL_FUNCTION`]]`FST_ST_VHDL_FUNCTION`             | 14
+| [[FST_ST_VHDL_RECORD,`FST_ST_VHDL_RECORD`]]`FST_ST_VHDL_RECORD`                   | 15
+| [[FST_ST_VHDL_PROCESS,`FST_ST_VHDL_PROCESS`]]`FST_ST_VHDL_PROCESS`                | 16
+| [[FST_ST_VHDL_BLOCK,`FST_ST_VHDL_BLOCK`]]`FST_ST_VHDL_BLOCK`                      | 17
+| [[FST_ST_VHDL_FOR_GENERATE,`FST_ST_VHDL_FOR_GENERATE`]]`FST_ST_VHDL_FOR_GENERATE` | 18
+| [[FST_ST_VHDL_IF_GENERATE,`FST_ST_VHDL_IF_GENERATE`]]`FST_ST_VHDL_IF_GENERATE`    | 19
+| [[FST_ST_VHDL_GENERATE,`FST_ST_VHDL_GENERATE`]]`FST_ST_VHDL_GENERATE`             | 20
+| [[FST_ST_VHDL_PACKAGE,`FST_ST_VHDL_PACKAGE`]]`FST_ST_VHDL_PACKAGE`                | 21
+| [[FST_ST_GEN_ATTRBEGIN,`FST_ST_GEN_ATTRBEGIN`]]`FST_ST_GEN_ATTRBEGIN`             | 252
+| [[FST_ST_GEN_ATTREND,`FST_ST_GEN_ATTREND`]]`FST_ST_GEN_ATTREND`                   | 253
+| [[FST_ST_VCD_SCOPE,`FST_ST_VCD_SCOPE`]]`FST_ST_VCD_SCOPE`                         | 254
+| [[FST_ST_VCD_UPSCOPE,`FST_ST_VCD_UPSCOPE`]]`FST_ST_VCD_UPSCOPE`                   | 255
 |===
 
 === `VarType` [[VarType]]
