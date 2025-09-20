@@ -199,12 +199,12 @@ This records the design hierachy and all the signal names.
 
 [options="header,autowidth"]
 |===
-| Name                                                                                                      | Offset  | Type  | Description
-| [[hierarchy_type,`hierarchy_type`]]`hierarchy_type`                                                       | 0       | `u8`  | Block type (<<FST_BL_HIER>> / <<FST_BL_HIER_LZ4>> / <<FST_BL_HIER_LZ4DUO>>).
-| [[hierarchy_length,`hierarchy_length`]]`hierarchy_length`                                                 | 1       | `u64` | Block length.
-| [[hierarchy_uncompressed_length,`hierarchy_uncompressed_length`]]`hierarchy_uncompressed_length`          | 9       | `u64` | Uncompressed length of `hierarchy_data`.
-| [[hierarchy_compressed_once_length,`hierarchy_compressed_once_length`]]`hierarchy_compressed_once_length` | 17      | `u64` | _Only present for <<FST_BL_HIER_LZ4DUO>>._ Length of the data after it has been compressed once.
-| [[hierarchy_data,`hierarchy_data`]]`hierarchy_data`                                                       | 17/25   | -     | Compressed hierarchy data.
+| Name                                                                                                      | Offset  | Type     | Description
+| [[hierarchy_type,`hierarchy_type`]]`hierarchy_type`                                                       | 0       | `u8`     | Block type (<<FST_BL_HIER>> / <<FST_BL_HIER_LZ4>> / <<FST_BL_HIER_LZ4DUO>>).
+| [[hierarchy_length,`hierarchy_length`]]`hierarchy_length`                                                 | 1       | `u64`    | Block length.
+| [[hierarchy_uncompressed_length,`hierarchy_uncompressed_length`]]`hierarchy_uncompressed_length`          | 9       | `u64`    | Uncompressed length of `hierarchy_data`.
+| [[hierarchy_compressed_once_length,`hierarchy_compressed_once_length`]]`hierarchy_compressed_once_length` | 17      | `varint` | _Only present for <<FST_BL_HIER_LZ4DUO>>._ Length of the data after it has been compressed once.
+| [[hierarchy_data,`hierarchy_data`]]`hierarchy_data`                                                       | depends | -        | Compressed hierarchy data.
 |===
 
 The `hierarchy_data` compression method is given by `hierarchy_type` as follows:

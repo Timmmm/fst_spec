@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="generator" content="Asciidoctor 2.0.18">
+<meta name="generator" content="Asciidoctor 2.0.20">
 <meta name="description" content="Specification of the FST digital waveform file format.">
 <meta name="author" content="Tim Hutt">
 <title>FST Format Specification</title>
@@ -1078,12 +1078,12 @@ This is an incomplete draft! Also I didn’t create the FST format so there may 
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a id="hierarchy_compressed_once_length"></a><code>hierarchy_compressed_once_length</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">17</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>u64</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>varint</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><em>Only present for <a href="#FST_BL_HIER_LZ4DUO"><code>FST_BL_HIER_LZ4DUO</code></a>.</em> Length of the data after it has been compressed once.</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a id="hierarchy_data"></a><code>hierarchy_data</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">17/25</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">depends</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Compressed hierarchy data.</p></td>
 </tr>
@@ -2785,7 +2785,7 @@ This is an incomplete draft! Also I didn’t create the FST format so there may 
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2023-01-08 21:56:10 UTC
+Last updated 2025-09-20 16:44:19 +0100
 </div>
 </div>
 </body>
