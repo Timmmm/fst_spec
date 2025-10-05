@@ -401,7 +401,7 @@ The Position Table data expands to an array of signed integers. The meaning of t
 |===
 | Decoded position value | Meaning
 | 0                      | The variable has no value changes.
-| >0                     | This is a byte offset into <<vc_waves_data>>, plus one.
+| >0                     | This is a byte offset into <<vc_waves_data>>, plus one (i.e. a value of 1 indicates an offset of 0).
 | <0                     | This is a "dynamic alias". The variable's change data is exactly the same as the variable with this ID code (negated and minus one).
 |===
 
@@ -416,12 +416,12 @@ It means the following:
 | Variable ID | Integer Value | Meaning
 | 0           | 0             | This variable doesn't change in this block.
 | 1           | 0             | This variable doesn't change in this block.
-| 2           | 100           | The changes are at byte offset 101 in <<vc_waves_data>>.
+| 2           | 100           | The changes are at byte offset 99 in <<vc_waves_data>>.
 | 3           | 0             | This variable doesn't change in this block.
 | 4           | -3            | _In this block_ this variable has the same changes as variable 2.
 | 5           | 0             | This variable doesn't change in this block.
-| 6           | 200           | The changes are at byte offset 201 in <<vc_waves_data>>.
-| 7           | 350           | The changes are at byte offset 351 in <<vc_waves_data>>.
+| 6           | 200           | The changes are at byte offset 199 in <<vc_waves_data>>.
+| 7           | 350           | The changes are at byte offset 349 in <<vc_waves_data>>.
 | 8           | -3            | _In this block_ this variable has the same changes as variable 2.
 |===
 
