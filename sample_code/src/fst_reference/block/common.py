@@ -133,7 +133,7 @@ class ByteReader:
 
         return struct.unpack(">d", b)[0]
 
-    def read_uleb128(self) -> tuple:
+    def read_uleb128(self) -> tuple[int, int]:
         """
         Read unsigned LEB128 from current offset. Returns (value, length_read).
         """
@@ -156,7 +156,7 @@ class ByteReader:
         self.offset = pos
         return result, length
 
-    def read_sleb128(self) -> tuple:
+    def read_sleb128(self) -> tuple[int, int]:
         """
         Read signed LEB128 (svarint) from current offset.
 

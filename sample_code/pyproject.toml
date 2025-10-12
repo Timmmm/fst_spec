@@ -14,3 +14,7 @@ parse_blocks = "fst_reference.parse_blocks:main"
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
+
+[tool.pyright]
+typeCheckingMode = "strict"
+pythonVersion = "3.12"
