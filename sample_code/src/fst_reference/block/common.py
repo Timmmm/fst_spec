@@ -2,16 +2,6 @@ import os
 import io
 
 
-def get_base_dir_from_fileobj(fobj):
-    """
-    Get base directory from a file object; fallback to cwd on error.
-    """
-    try:
-        return os.path.dirname(os.path.abspath(fobj.name))
-    except Exception:
-        return os.getcwd()
-
-
 def write_blob(
     base_dir, block_idx, block_type: str, offset, payload_len, sub_idx, ext, data_bytes
 ):
