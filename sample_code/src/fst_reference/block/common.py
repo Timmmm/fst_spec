@@ -3,7 +3,9 @@ import io
 
 
 def get_base_dir_from_fileobj(fobj):
-    """Get base directory from a file object; fallback to cwd on error."""
+    """
+    Get base directory from a file object; fallback to cwd on error.
+    """
     try:
         return os.path.dirname(os.path.abspath(fobj.name))
     except Exception:
@@ -13,7 +15,8 @@ def get_base_dir_from_fileobj(fobj):
 def write_blob(
     base_dir, block_idx, block_type: str, offset, payload_len, sub_idx, ext, data_bytes
 ):
-    """Write an arbitrary blob (JSON, binary) using a stable filename format:
+    """
+    Write an arbitrary blob (JSON, binary) using a stable filename format:
     sub_idx is used when multiple files are produced per block (starting at 0).
     """
     # format with spacing to keep sortable; use zero-padded numeric fields for stability
@@ -25,7 +28,9 @@ def write_blob(
 
 
 class ByteReader:
-    """A simple byte reader with offset tracking and bounds checking."""
+    """
+    A simple byte reader with offset tracking and bounds checking.
+    """
 
     def __init__(self, data: bytes):
         self.data = data
@@ -129,7 +134,9 @@ class ByteReader:
         return struct.unpack(">d", b)[0]
 
     def read_uleb128(self) -> tuple:
-        """Read unsigned LEB128 from current offset. Returns (value, length_read)."""
+        """
+        Read unsigned LEB128 from current offset. Returns (value, length_read).
+        """
         result = 0
         shift = 0
         start = self.offset
@@ -150,7 +157,8 @@ class ByteReader:
         return result, length
 
     def read_sleb128(self) -> tuple:
-        """Read signed LEB128 (svarint) from current offset.
+        """
+        Read signed LEB128 (svarint) from current offset.
 
         Returns (value, length_read). Implements sign-extension similar to
         fstGetSVarint64 semantics.
@@ -163,7 +171,8 @@ class ByteReader:
         return result, length
 
     def read_svarint_list(self, n: int = 16):
-        """Read up to n signed LEB128s from current offset.
+        """
+        Read up to n signed LEB128s from current offset.
 
         Returns list of tuples (start_offset, length, value). Advances reader.
         """
@@ -177,24 +186,31 @@ class ByteReader:
         return out
 
     def read_u64_rev(self) -> int:
-        """Move back 8 bytes from current cursor and read a big-endian u64."""
+        """
+        Move back 8 bytes from current cursor and read a big-endian u64.
+        """
         self.seek(-8, io.SEEK_CUR)
         import struct
 
         return struct.unpack(">Q", self.peek_bytes(8))[0]
 
     def read_bytes_rev(self, n: int) -> bytes:
-        """Move back `n` bytes from current cursor and read `n` bytes."""
+        """
+        Move back `n` bytes from current cursor and read `n` bytes.
+        """
         self.seek(-n, io.SEEK_CUR)
         return self.peek_bytes(n)
 
     def read_cstring(self) -> tuple:
-        """Read a null-terminated C string from current offset. Returns (str, length_including_null)."""
+        """
+        Read a null-terminated C string from current offset. Returns (str, length_including_null).
+        """
         # backward compatible signature without max_size
         return self.read_cstring_max(None)
 
     def read_cstring_max(self, max_size: int = None) -> tuple:
-        """Read a null-terminated C string from current offset.
+        """
+        Read a null-terminated C string from current offset.
 
         If max_size is provided, the returned Python string is truncated to at most
         max_size bytes (mimicking a fixed-size C buffer copy), but the reader will

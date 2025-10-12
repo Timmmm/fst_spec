@@ -1,4 +1,5 @@
-"""Hierarchy block handlers
+"""
+Hierarchy block handlers
 Handlers for hierarchy-related block types: HIER_GZ, HIER_LZ4, HIER_LZ4DUO.
 Each handler writes a header JSON (00), the raw uncompressed binary (01) for debug, and a parsed JSON (02).
 """
@@ -16,8 +17,10 @@ def _u64(b, i):
 
 
 def _try_lz4_decompress(data, expected_size=None):
-    """Try to decompress raw LZ4 block. Prefer lz4.block with uncompressed_size when available,
-    fallback to lz4.frame if needed. Raises RuntimeError if no lz4 available."""
+    """
+    Try to decompress raw LZ4 block. Prefer lz4.block with uncompressed_size when available,
+    fallback to lz4.frame if needed. Raises RuntimeError if no lz4 available.
+    """
     # try lz4.block first
     try:
         import lz4.block as lz4block
@@ -42,7 +45,9 @@ def _try_lz4_decompress(data, expected_size=None):
 
 
 def _try_gzip_decompress(data):
-    """Try gzip decompression, fallback to zlib. Raises RuntimeError on failure."""
+    """
+    Try gzip decompression, fallback to zlib. Raises RuntimeError on failure.
+    """
     try:
         return gzip.decompress(data)
     except Exception:
@@ -57,7 +62,8 @@ def _try_gzip_decompress(data):
 def _write_hier_result(
     base_dir, block_idx, offset, payload_len, block_str, info, final_bytes
 ):
-    """Write header JSON, raw full binary for debug, and parsed JSON via hier_data.parse_hier_binary.
+    """
+    Write header JSON, raw full binary for debug, and parsed JSON via hier_data.parse_hier_binary.
     Let parsing exceptions propagate.
     """
     jbytes = json.dumps(info, ensure_ascii=False, indent=2).encode("utf-8")
@@ -79,7 +85,9 @@ def _write_hier_result(
 
 
 def CallHIER_GZ(payload: bytes, idx: int, block_str: str, offset: int, output_dir: str):
-    """Handle HIER_GZ: payload contains uncompressed_length (8B) followed by gzWrite-compressed data."""
+    """
+    Handle HIER_GZ: payload contains uncompressed_length (8B) followed by gzWrite-compressed data.
+    """
     base_dir = output_dir
     payload_len = len(payload)
     if payload_len < 8:
@@ -106,7 +114,9 @@ def CallHIER_GZ(payload: bytes, idx: int, block_str: str, offset: int, output_di
 def CallHIER_LZ4(
     payload: bytes, idx: int, block_str: str, offset: int, output_dir: str
 ):
-    """Handle HIER_LZ4: payload contains uncompressed_length (8B) followed by raw LZ4 block-compressed data."""
+    """
+    Handle HIER_LZ4: payload contains uncompressed_length (8B) followed by raw LZ4 block-compressed data.
+    """
     base_dir = output_dir
     payload_len = len(payload)
     if payload_len < 8:
@@ -133,7 +143,10 @@ def CallHIER_LZ4(
 def CallHIER_LZ4DUO(
     payload: bytes, idx: int, block_str: str, offset: int, output_dir: str
 ):
-    """Handle HIER_LZ4DUO: payload contains uncompressed_length (8B), compressed_once_length (8B), then data compressed twice with raw LZ4 blocks (first round then second round)."""
+    """
+    Handle HIER_LZ4DUO: payload contains uncompressed_length (8B), compressed_once_length (8B),
+    then data compressed twice with raw LZ4 blocks (first round then second round).
+    """
     base_dir = output_dir
     payload_len = len(payload)
     if payload_len < 16:

@@ -16,7 +16,8 @@ class BlockType(IntEnum):
     SKIP = 255
 
 
-"""FST block handlers
+"""
+FST block handlers
 Central registry for block types and their handlers.
 Handlers follow the signature: handler(first4_bytes, file_obj, offset, payload_len, block_str, output_dir)
 """

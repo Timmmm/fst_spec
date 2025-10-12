@@ -1,4 +1,5 @@
-"""BLACKOUT block handler
+"""
+BLACKOUT block handler
 Parse payload: LEB128 count, then `count` entries of (1 byte state, LEB128 timestamp).
 State: 0 -> off, 1 -> on. Produce a single JSON file with entries.
 """

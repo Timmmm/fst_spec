@@ -1,4 +1,5 @@
-"""GEOM block handler
+"""
+GEOM block handler
 Parses geometry blocks: writes header JSON, decompressed binary, and decoded LEB128 values JSON.
 """
 

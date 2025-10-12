@@ -156,7 +156,8 @@ def _parse_wave_data(wave_data: bytes, positions: List[int]):
 
 
 def CallVCDATA(payload: bytes, idx: int, block_str: str, offset: int, output_dir: str):
-    """Parse a Value Change block and write out the four variable-length tables as blobs
+    """
+    Parse a Value Change block and write out the four variable-length tables as blobs
     (bits, waves, position, time). Other metadata is written to a JSON file.
 
     For the four table blobs we use sub_idx=1 as requested. Metadata JSON uses sub_idx=0.
@@ -165,12 +166,12 @@ def CallVCDATA(payload: bytes, idx: int, block_str: str, offset: int, output_dir
     payload_len = len(payload)
     info = dict()
 
-    """Cite from adoc:
-    It contains four tables - the bits array, waves table, position table and time table.
-    Note that the lengths of the position and time tables come after their data,
-    so you have to read backwards from the end to decode those tables.
-    I am not sure of the reason for this.
-    """
+
+    # Cite from adoc:
+    # It contains four tables - the bits array, waves table, position table and time table.
+    # Note that the lengths of the position and time tables come after their data,
+    # so you have to read backwards from the end to decode those tables.
+    # I am not sure of the reason for this.
     br_head = ByteReader(payload)
     br_tail = ByteReader(payload)
     (

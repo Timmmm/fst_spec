@@ -1,4 +1,5 @@
-"""HDR block handler and parser
+"""
+HDR block handler and parser
 Parses the HDR block layout and writes a JSON with header fields.
 """
 

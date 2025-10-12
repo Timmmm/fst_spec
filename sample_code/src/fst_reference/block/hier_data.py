@@ -1,4 +1,5 @@
-"""Hierarchy data parsing helpers
+"""
+Hierarchy data parsing helpers
 
 Provides a minimal framework to parse the uncompressed hierarchy binary produced by HIER_* handlers.
 - register_subparser(tag_byte, func): register a subparser; func(data, offset) -> (consumed, obj)
@@ -81,7 +82,8 @@ _subparsers: Dict[int, Callable[[ByteReader], object]] = {}
 
 
 def register_subparser(tag_byte: int, fn: Callable[[ByteReader], object]):
-    """Register a subparser for a given leading tag byte.
+    """
+    Register a subparser for a given leading tag byte.
     fn receives a ByteReader positioned at the tag byte and must consume bytes from it.
     It returns a parsed object (JSON-serializable). The caller will compute consumed bytes
     as the difference in reader position before/after the call.
@@ -95,7 +97,8 @@ def register_subparsers(tag_bytes: Iterable[int], fn: Callable[[ByteReader], obj
 
 
 def parse_hier_binary(data: bytes) -> dict:
-    """Parse sequentially from offset 0 until an unknown tag is encountered.
+    """
+    Parse sequentially from offset 0 until an unknown tag is encountered.
 
     Returns a dict: { total_len, consumed, data: [ ... ], stopped?, stopped_at?, stopped_tag?, remaining_len?, remaining_preview? }.
     """
@@ -222,7 +225,8 @@ def _parse_attrend(br: ByteReader) -> object:
 
 
 def _parse_var(br: ByteReader) -> object:
-    """Parse when buffer at offset begins with Var::Type directly (no leading Hierarchy tag).
+    """
+    Parse when buffer at offset begins with Var::Type directly (no leading Hierarchy tag).
     Format: vt(1) + name\0 + len(varint) + alias(varint)
     """
     # new format: vt(1) + name\0 + len(varint) + alias(varint)
