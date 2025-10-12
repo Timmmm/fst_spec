@@ -7,7 +7,7 @@ import json
 from .common import write_blob, ByteReader
 
 
-def CallHDR(payload: bytes, idx: int, block_str: str, offset: int, output_dir: str):
+def handle_hdr(payload: bytes, idx: int, block_str: str, offset: int, output_dir: str):
     # payload is provided as bytes by the caller
     base_dir = output_dir
     payload_len = len(payload)

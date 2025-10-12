@@ -8,7 +8,7 @@ import json
 from .common import write_blob, ByteReader
 
 
-def CallGEOM(payload: bytes, idx: int, block_str: str, offset: int, output_dir: str):
+def handle_geom(payload: bytes, idx: int, block_str: str, offset: int, output_dir: str):
     base_dir = output_dir
     payload_len = len(payload)
 

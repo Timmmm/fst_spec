@@ -7,11 +7,11 @@ Handlers follow the signature: handler(first4_bytes, file_obj, offset, payload_l
 from enum import IntEnum
 from typing import Callable, NamedTuple
 
-from .hdr import CallHDR
-from .vcdata import CallVCDATA
-from .geom import CallGEOM
-from .hier import CallHIER_GZ, CallHIER_LZ4, CallHIER_LZ4DUO
-from .blackout import CallBLACKOUT
+from .hdr import handle_hdr
+from .vcdata import handle_vcdata
+from .geom import handle_geom
+from .hier import handle_hier_gz, handle_hier_lz4, handle_hier_lz4duo
+from .blackout import handle_blackout
 
 
 # FST block header definitions
@@ -43,13 +43,13 @@ class BlockHandler(NamedTuple):
 
 
 BLOCKS: dict[int, BlockHandler] = {
-    BlockType.HDR.value: BlockHandler(name="HDR", handler=CallHDR),
-    BlockType.BLACKOUT.value: BlockHandler(name="BLACKOUT", handler=CallBLACKOUT),
-    BlockType.GEOM.value: BlockHandler(name="GEOM", handler=CallGEOM),
-    BlockType.HIER_GZ.value: BlockHandler(name="HIER_GZ", handler=CallHIER_GZ),
-    BlockType.HIER_LZ4.value: BlockHandler(name="HIER_LZ4", handler=CallHIER_LZ4),
+    BlockType.HDR.value: BlockHandler(name="HDR", handler=handle_hdr),
+    BlockType.BLACKOUT.value: BlockHandler(name="BLACKOUT", handler=handle_blackout),
+    BlockType.GEOM.value: BlockHandler(name="GEOM", handler=handle_geom),
+    BlockType.HIER_GZ.value: BlockHandler(name="HIER_GZ", handler=handle_hier_gz),
+    BlockType.HIER_LZ4.value: BlockHandler(name="HIER_LZ4", handler=handle_hier_lz4),
     BlockType.HIER_LZ4DUO.value: BlockHandler(
-        name="HIER_LZ4DUO", handler=CallHIER_LZ4DUO
+        name="HIER_LZ4DUO", handler=handle_hier_lz4duo
     ),
     BlockType.VCDATA.value: BlockHandler(
         name="VCDATA", handler=_unsupported_block_handler
@@ -60,6 +60,6 @@ BLOCKS: dict[int, BlockHandler] = {
     ),
     BlockType.VCDATA_DYN_ALIAS2.value: BlockHandler(
         name="VCDATA_DYN_ALIAS2",
-        handler=CallVCDATA,
+        handler=handle_vcdata,
     ),
 }

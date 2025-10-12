@@ -91,7 +91,7 @@ def _write_hier_result(
     )
 
 
-def CallHIER_GZ(payload: bytes, idx: int, block_str: str, offset: int, output_dir: str):
+def handle_hier_gz(payload: bytes, idx: int, block_str: str, offset: int, output_dir: str):
     """
     Handle HIER_GZ: payload contains uncompressed_length (8B) followed by gzWrite-compressed data.
     """
@@ -118,7 +118,7 @@ def CallHIER_GZ(payload: bytes, idx: int, block_str: str, offset: int, output_di
     _write_hier_result(base_dir, idx, offset, block_len, block_str, info, dec)
 
 
-def CallHIER_LZ4(
+def handle_hier_lz4(
     payload: bytes, idx: int, block_str: str, offset: int, output_dir: str
 ):
     """
@@ -147,7 +147,7 @@ def CallHIER_LZ4(
     _write_hier_result(base_dir, idx, offset, block_len, block_str, info, dec)
 
 
-def CallHIER_LZ4DUO(
+def handle_hier_lz4duo(
     payload: bytes, idx: int, block_str: str, offset: int, output_dir: str
 ):
     """

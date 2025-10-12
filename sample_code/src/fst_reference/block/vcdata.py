@@ -157,7 +157,7 @@ def _parse_wave_data(wave_data: bytes, positions: list[int]) -> list[dict[str, A
     return wave_json
 
 
-def CallVCDATA(payload: bytes, idx: int, block_str: str, offset: int, output_dir: str):
+def handle_vcdata(payload: bytes, idx: int, block_str: str, offset: int, output_dir: str):
     """
     Parse a Value Change block and write out the four variable-length tables as blobs
     (bits, waves, position, time). Other metadata is written to a JSON file.

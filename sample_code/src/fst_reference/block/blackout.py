@@ -9,7 +9,7 @@ from .common import write_blob, ByteReader
 import json
 
 
-def CallBLACKOUT(
+def handle_blackout(
     payload: bytes, idx: int, block_str: str, offset: int, output_dir: str
 ) -> None:
     base_dir = output_dir
