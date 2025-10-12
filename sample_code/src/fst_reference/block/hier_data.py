@@ -266,9 +266,9 @@ def _parse_var(br: ByteReader) -> dict[str, Any]:
 
 # Register subparsers for Hierarchy::Type values
 register_subparsers(
-    range(int(VarType.VCD_EVENT), int(VarType.SV_SHORTREAL) + 1), _parse_var
+    range(VarType.VCD_EVENT.value, VarType.SV_SHORTREAL.value + 1), _parse_var
 )
-register_subparser(int(ScopeType.VCD_SCOPE), _parse_scope)
-register_subparser(int(ScopeType.VCD_UPSCOPE), _parse_upscope)
-register_subparser(int(ScopeType.GEN_ATTRBEGIN), _parse_attrbegin)
-register_subparser(int(ScopeType.GEN_ATTREND), _parse_attrend)
+register_subparser(ScopeType.VCD_SCOPE.value, _parse_scope)
+register_subparser(ScopeType.VCD_UPSCOPE.value, _parse_upscope)
+register_subparser(ScopeType.GEN_ATTRBEGIN.value, _parse_attrbegin)
+register_subparser(ScopeType.GEN_ATTREND.value, _parse_attrend)
