@@ -23,6 +23,8 @@ Unfortunately these formats are all proprietary, therefore the https://github.co
 
 Unfortunately there is no official specification for FST, so I wrote this one based on reading https://github.com/gtkwave/gtkwave/blob/c98739bfeb663ba2d695165759dbdf850f0147ab/gtkwave4/src/helpers/fst/[the GtkWave FST source code].
 
+TIP: https://github.com/johnjohnlin[Yu-Sheng Lin] has generously donated *https://github.com/Timmmm/fst_spec/tree/master/sample_code[sample Python code]* based on this spec.
+
 == Format Overview
 
 Below is a hyperlinked diagram of the entire format. It is a block based format with a few metadata blocks and a set of <<Value Change Block,Value Change blocks>> which store the actual waveform data. Each Value Change block spans a period of time and includes the initial value of all variables, so it can be decoded independently of any other block. It is designed so the waveforms for a few variables can be extracted without having to decode the entire block.
