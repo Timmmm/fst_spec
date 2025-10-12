@@ -1,3 +1,15 @@
+"""
+FST block handlers
+Central registry for block types and their handlers.
+Handlers follow the signature: handler(first4_bytes, file_obj, offset, payload_len, block_str, output_dir)
+"""
+
+from .hdr import CallHDR
+from .vcdata import CallVCDATA
+from .geom import CallGEOM
+from .hier import CallHIER_GZ, CallHIER_LZ4, CallHIER_LZ4DUO
+from .blackout import CallBLACKOUT
+
 from enum import IntEnum
 
 
@@ -14,18 +26,6 @@ class BlockType(IntEnum):
     VCDATA_DYN_ALIAS2 = 8
     ZWRAPPER = 254
     SKIP = 255
-
-
-"""
-FST block handlers
-Central registry for block types and their handlers.
-Handlers follow the signature: handler(first4_bytes, file_obj, offset, payload_len, block_str, output_dir)
-"""
-from .hdr import CallHDR
-from .vcdata import CallVCDATA
-from .geom import CallGEOM
-from .hier import CallHIER_GZ, CallHIER_LZ4, CallHIER_LZ4DUO
-from .blackout import CallBLACKOUT
 
 
 def _unsupported_block_handler(

@@ -166,7 +166,6 @@ def CallVCDATA(payload: bytes, idx: int, block_str: str, offset: int, output_dir
     payload_len = len(payload)
     info = dict()
 
-
     # Cite from adoc:
     # It contains four tables - the bits array, waves table, position table and time table.
     # Note that the lengths of the position and time tables come after their data,
