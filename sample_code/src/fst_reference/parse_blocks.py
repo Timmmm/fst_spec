@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Simple parser for FST blocks: 1 byte type, 8 byte length (length does not count the preceding 1 byte type, but includes this 8-byte length field)
 Usage: python parse_blocks.py input_fst [--output_dir DIR]
 """
@@ -7,7 +6,7 @@ import argparse
 import struct
 import shutil
 from pathlib import Path
-from block.handlers import BLOCKS
+from .block.handlers import BLOCKS
 FMT_U8 = '>B'
 FMT_U64 = '>Q'
 
@@ -68,7 +67,3 @@ def main():
     args = parser.parse_args()
 
     extract_blocks(args.input_fst, args.output_dir)
-
-
-if __name__ == '__main__':
-    main()

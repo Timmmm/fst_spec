@@ -1,0 +1,16 @@
+[project]
+name = "fst_reference"
+version = "0.1.0"
+requires-python = ">=3.12"
+description = "Sample code to decode FST wave files"
+readme = "README.md"
+dependencies = [
+    "lz4 >=4, <5",
+]
+
+[project.scripts]
+parse_blocks = "fst_reference.parse_blocks:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
