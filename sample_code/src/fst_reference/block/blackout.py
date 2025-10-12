@@ -5,8 +5,8 @@ State: 0 -> off, 1 -> on. Produce a single JSON file with entries.
 """
 
 from typing import Any
-from .common import write_blob, ByteReader
 import json
+from .common import write_blob, ByteReader
 
 
 def handle_blackout(
@@ -21,28 +21,24 @@ def handle_blackout(
         "entries": [],
     }
 
-    try:
-        br = ByteReader(payload)
-        br.seek(0)
-        count, _n = br.read_uleb128()
-        result["count"] = count
+    br = ByteReader(payload)
+    br.seek(0)
+    count, _n = br.read_uleb128()
+    result["count"] = count
 
-        for i in range(count):
-            if br.remaining() <= 0:
-                raise RuntimeError(f"truncated entry {i}")
-            state_b = br.read_u8()
-            if state_b == 0:
-                state = "off"
-            elif state_b == 1:
-                state = "on"
-            else:
-                state = f"unknown({state_b})"
+    for i in range(count):
+        if br.remaining() <= 0:
+            raise RuntimeError(f"truncated entry {i}")
+        state_b = br.read_u8()
+        if state_b == 0:
+            state = "off"
+        elif state_b == 1:
+            state = "on"
+        else:
+            state = f"unknown({state_b})"
 
-            ts, _m = br.read_uleb128()
-            result["entries"].append({"state": state, "timestamp": ts})
-
-    except Exception as e:
-        result["error"] = str(e)
+        ts, _m = br.read_uleb128()
+        result["entries"].append({"state": state, "timestamp": ts})
 
     jbytes = json.dumps(result, ensure_ascii=False, indent=2).encode("utf-8")
     block_len = payload_len + 8  # FST block = 8 bytes header + payload

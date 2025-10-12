@@ -77,7 +77,7 @@ class VarType(IntEnum):
 
 
 # Global state: count of non-alias variables (assigned sequential IDs starting at 0)
-_non_alias_var_count = 0
+_non_alias_var_count: int = 0
 
 _subparsers: dict[int, Callable[[ByteReader], dict[str, Any]]] = {}
 

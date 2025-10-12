@@ -1,8 +1,8 @@
+import io
 import json
 from typing import Any
 import zlib
 import lz4.block  # type: ignore
-import io
 
 from .common import write_blob, ByteReader
 
@@ -126,7 +126,6 @@ def _parse_wave_data(wave_data: bytes, positions: list[int]) -> list[dict[str, A
     ):
         entry: dict[str, Any] = {"var_idx": i}
         if pos > 0:
-            pass
             br.seek(offset)
             uncompressed_length, consumed = br.read_uleb128()
             compressed_length = num_bytes - consumed
