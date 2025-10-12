@@ -260,7 +260,6 @@ def _parse_var(br: ByteReader) -> dict[str, Any]:
         "is_alias": is_alias,
         "var_id": assigned_id,
     }
-    # print(ret)
     return ret
 
 
