@@ -15,7 +15,11 @@ def handle_blackout(
     base_dir = output_dir
     payload_len = len(payload)
 
-    result: dict[str, Any] = {"offset": offset, "payload_len": payload_len, "entries": []}
+    result: dict[str, Any] = {
+        "offset": offset,
+        "payload_len": payload_len,
+        "entries": [],
+    }
 
     try:
         br = ByteReader(payload)

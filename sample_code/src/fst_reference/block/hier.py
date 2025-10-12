@@ -91,7 +91,9 @@ def _write_hier_result(
     )
 
 
-def handle_hier_gz(payload: bytes, idx: int, block_str: str, offset: int, output_dir: str):
+def handle_hier_gz(
+    payload: bytes, idx: int, block_str: str, offset: int, output_dir: str
+):
     """
     Handle HIER_GZ: payload contains uncompressed_length (8B) followed by gzWrite-compressed data.
     """

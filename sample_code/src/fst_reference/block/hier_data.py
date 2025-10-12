@@ -92,7 +92,9 @@ def register_subparser(tag_byte: int, fn: Callable[[ByteReader], dict[str, Any]]
     _subparsers[tag_byte & 0xFF] = fn
 
 
-def register_subparsers(tag_bytes: Iterable[int], fn: Callable[[ByteReader], dict[str, Any]]):
+def register_subparsers(
+    tag_bytes: Iterable[int], fn: Callable[[ByteReader], dict[str, Any]]
+):
     for tag in tag_bytes:
         register_subparser(tag, fn)
 
@@ -160,7 +162,9 @@ def _parse_scope(br: ByteReader) -> dict[str, Any]:
     name, _nlen = br.read_cstring()
     comp, _clen = br.read_cstring()
     _consumed = br.tell() - start
-    st_name = ScopeType(scopetype).name if scopetype in ScopeType else f"UNKNOWN_{scopetype}"
+    st_name = (
+        ScopeType(scopetype).name if scopetype in ScopeType else f"UNKNOWN_{scopetype}"
+    )
 
     ret = {
         "type": "SCOPE",
