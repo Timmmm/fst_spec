@@ -10,7 +10,7 @@ import json
 
 def CallBLACKOUT(
     payload: bytes, idx: int, block_str: str, offset: int, output_dir: str
-):
+) -> None:
     base_dir = output_dir
     payload_len = len(payload)
 
@@ -44,5 +44,3 @@ def CallBLACKOUT(
     write_blob(
         base_dir, idx, int(block_str), offset, block_len, 0, "BLACKOUT.json", jbytes
     )
-
-    return
