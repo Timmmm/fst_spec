@@ -12,11 +12,11 @@ from .common import write_blob
 from . import hier_data
 
 
-def _u64(b, i):
+def _u64(b: bytes, i: int) -> int:
     return struct.unpack(">Q", b[i : i + 8])[0]
 
 
-def _try_lz4_decompress(data, expected_size=None):
+def _try_lz4_decompress(data: bytes, expected_size: int | None = None) -> bytes:
     """
     Try to decompress raw LZ4 block. Prefer lz4.block with uncompressed_size when available,
     fallback to lz4.frame if needed. Raises RuntimeError if no lz4 available.
@@ -44,7 +44,7 @@ def _try_lz4_decompress(data, expected_size=None):
     raise RuntimeError("lz4 decompression not available")
 
 
-def _try_gzip_decompress(data):
+def _try_gzip_decompress(data: bytes) -> bytes:
     """
     Try gzip decompression, fallback to zlib. Raises RuntimeError on failure.
     """
@@ -60,8 +60,14 @@ def _try_gzip_decompress(data):
 
 
 def _write_hier_result(
-    base_dir, block_idx, offset, payload_len, block_str, info, final_bytes
-):
+    base_dir: str,
+    block_idx: int,
+    offset: int,
+    payload_len: int,
+    block_str: str,
+    info,
+    final_bytes: bytes,
+) -> None:
     """
     Write header JSON, raw full binary for debug, and parsed JSON via hier_data.parse_hier_binary.
     Let parsing exceptions propagate.

@@ -153,13 +153,13 @@ def _parse_scope(br: ByteReader) -> object:
     if start >= blen:
         raise RuntimeError("offset out of range")
     # read tag already present at current position
-    tag = br.read_u8()
+    _tag = br.read_u8()
     if br.remaining() <= 0:
         raise RuntimeError("truncated scope")
     scopetype = br.read_u8()
-    name, nlen = br.read_cstring()
-    comp, clen = br.read_cstring()
-    consumed = br.tell() - start
+    name, _nlen = br.read_cstring()
+    comp, _clen = br.read_cstring()
+    _consumed = br.tell() - start
     try:
         st_name = ScopeType(scopetype).name
     except Exception:
@@ -177,15 +177,15 @@ def _parse_scope(br: ByteReader) -> object:
 
 def _parse_upscope(br: ByteReader) -> object:
     # tag only
-    start = br.tell()
-    tag = br.read_u8()
+    _start = br.tell()
+    _tag = br.read_u8()
     return {"type": "UPSCOPE"}
 
 
 def _parse_attrbegin(br: ByteReader) -> object:
     # tag(1) + attrtype(1) + subtype(1) + name\0 + arg(varint)
-    start = br.tell()
-    tag = br.read_u8()
+    _start = br.tell()
+    _tag = br.read_u8()
     attrtype = br.read_u8()
     # currently only support attrtype == 0
     if attrtype != 0:
@@ -221,7 +221,7 @@ def _parse_attrbegin(br: ByteReader) -> object:
 
 def _parse_attrend(br: ByteReader) -> object:
     # placeholder for ATTREND; no payload
-    tag = br.read_u8()
+    _tag = br.read_u8()
     return {"type": "ATTREND"}
 
 
@@ -234,10 +234,10 @@ def _parse_var(br: ByteReader) -> object:
     start = br.tell()
     vt = br.read_u8()
     vd = br.read_u8()
-    name, nlen = br.read_cstring()
-    vlen, vlen_len = br.read_uleb128()
-    alias, alias_len = br.read_uleb128()
-    consumed = br.tell() - start
+    name, _nlen = br.read_cstring()
+    vlen, _vlen_len = br.read_uleb128()
+    alias, _alias_len = br.read_uleb128()
+    _consumed = br.tell() - start
 
     vt_name = VarType(vt).name
 
