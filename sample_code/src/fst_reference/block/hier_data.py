@@ -88,9 +88,11 @@ def register_subparser(tag_byte: int, fn: Callable[[ByteReader], object]):
     """
     _subparsers[tag_byte & 0xFF] = fn
 
-def register_subparsers(tag_bytes : Iterable[int], fn: Callable[[ByteReader], object]):
+
+def register_subparsers(tag_bytes: Iterable[int], fn: Callable[[ByteReader], object]):
     for tag in tag_bytes:
         register_subparser(tag, fn)
+
 
 def parse_hier_binary(data: bytes) -> dict:
     """Parse sequentially from offset 0 until an unknown tag is encountered.
@@ -106,10 +108,10 @@ def parse_hier_binary(data: bytes) -> dict:
     while off < total:
         first = data[off]
         if first not in _subparsers:
-            snippet = data[off:off+64]
+            snippet = data[off : off + 64]
             hexp = snippet.hex()
-            ascp = ''.join([chr(b) if 32 <= b <= 126 else '.' for b in snippet])
-            msg = f'Unregistered hierarchy tag {int(first)} at offset {off}; next_bytes_hex={hexp}; ascii_preview={ascp}'
+            ascp = "".join([chr(b) if 32 <= b <= 126 else "." for b in snippet])
+            msg = f"Unregistered hierarchy tag {int(first)} at offset {off}; next_bytes_hex={hexp}; ascii_preview={ascp}"
             print(msg)
             raise RuntimeError(msg)
 
@@ -121,18 +123,18 @@ def parse_hier_binary(data: bytes) -> dict:
         consumed = br.tell() - start_pos
 
         if consumed <= 0:
-            snippet = data[off:off+64]
+            snippet = data[off : off + 64]
             hexp = snippet.hex()
-            ascp = ''.join([chr(b) if 32 <= b <= 126 else '.' for b in snippet])
-            msg = f'subparser for tag {first} returned non-positive consumed at offset {off}; next_bytes_hex={hexp}; ascii_preview={ascp}'
+            ascp = "".join([chr(b) if 32 <= b <= 126 else "." for b in snippet])
+            msg = f"subparser for tag {first} returned non-positive consumed at offset {off}; next_bytes_hex={hexp}; ascii_preview={ascp}"
             print(msg)
             raise RuntimeError(msg)
 
-        obj['offset'] = off
+        obj["offset"] = off
         data_list.append(obj)
         off += consumed
 
-    return {'total_len': total, 'consumed': off, 'data': data_list, 'stopped': False}
+    return {"total_len": total, "consumed": off, "data": data_list, "stopped": False}
 
 
 # -------------------- Subparsers --------------------
@@ -145,11 +147,11 @@ def _parse_scope(br: ByteReader) -> object:
     start = br.tell()
     blen = br.length
     if start >= blen:
-        raise RuntimeError('offset out of range')
+        raise RuntimeError("offset out of range")
     # read tag already present at current position
     tag = br.read_u8()
     if br.remaining() <= 0:
-        raise RuntimeError('truncated scope')
+        raise RuntimeError("truncated scope")
     scopetype = br.read_u8()
     name, nlen = br.read_cstring()
     comp, clen = br.read_cstring()
@@ -157,9 +159,15 @@ def _parse_scope(br: ByteReader) -> object:
     try:
         st_name = ScopeType(scopetype).name
     except Exception:
-        st_name = f'UNKNOWN_{scopetype}'
+        st_name = f"UNKNOWN_{scopetype}"
 
-    ret = {'type': 'SCOPE', 'scope_type_num': scopetype, 'scope_type_name': st_name, 'name': name, 'component': comp}
+    ret = {
+        "type": "SCOPE",
+        "scope_type_num": scopetype,
+        "scope_type_name": st_name,
+        "name": name,
+        "component": comp,
+    }
     return ret
 
 
@@ -167,7 +175,7 @@ def _parse_upscope(br: ByteReader) -> object:
     # tag only
     start = br.tell()
     tag = br.read_u8()
-    return {'type': 'UPSCOPE'}
+    return {"type": "UPSCOPE"}
 
 
 def _parse_attrbegin(br: ByteReader) -> object:
@@ -192,17 +200,17 @@ def _parse_attrbegin(br: ByteReader) -> object:
     # 8 FST_MT_UNKNOWN
 
     ret = {
-        'type': 'ATTRBEGIN',
-        'attrtype': attrtype,
-        'subtype': subtype,
+        "type": "ATTRBEGIN",
+        "attrtype": attrtype,
+        "subtype": subtype,
     }
     if subtype == 4 or subtype == 5:
-        ret['attr_value1'] = br.read_uleb128()[0]
-        assert br.read_u8() == 0 # null terminator
-        ret['attr_value2'] = br.read_uleb128()[0]
+        ret["attr_value1"] = br.read_uleb128()[0]
+        assert br.read_u8() == 0  # null terminator
+        ret["attr_value2"] = br.read_uleb128()[0]
     else:
-        ret['attr_str'] = br.read_cstring()[0]
-        ret['attr_value'] = br.read_uleb128()[0]
+        ret["attr_str"] = br.read_cstring()[0]
+        ret["attr_value"] = br.read_uleb128()[0]
 
     return ret
 
@@ -210,7 +218,9 @@ def _parse_attrbegin(br: ByteReader) -> object:
 def _parse_attrend(br: ByteReader) -> object:
     # placeholder for ATTREND; no payload
     tag = br.read_u8()
-    return {'type': 'ATTREND'}
+    return {"type": "ATTREND"}
+
+
 def _parse_var(br: ByteReader) -> object:
     """Parse when buffer at offset begins with Var::Type directly (no leading Hierarchy tag).
     Format: vt(1) + name\0 + len(varint) + alias(varint)
@@ -238,22 +248,24 @@ def _parse_var(br: ByteReader) -> object:
         is_alias = True
 
     ret = {
-        'type': 'VAR',
-        'var_type_num': vt,
-        'var_dir_num': vd,
-        'var_type_name': vt_name,
-        'name': name,
-        'bit_length': vlen,
-        'alias': alias,
-        'is_alias': is_alias,
-        'var_id': assigned_id,
+        "type": "VAR",
+        "var_type_num": vt,
+        "var_dir_num": vd,
+        "var_type_name": vt_name,
+        "name": name,
+        "bit_length": vlen,
+        "alias": alias,
+        "is_alias": is_alias,
+        "var_id": assigned_id,
     }
     # print(ret)
     return ret
 
 
 # Register subparsers for Hierarchy::Type values
-register_subparsers(range(int(VarType.VCD_EVENT), int(VarType.SV_SHORTREAL) + 1), _parse_var)
+register_subparsers(
+    range(int(VarType.VCD_EVENT), int(VarType.SV_SHORTREAL) + 1), _parse_var
+)
 register_subparser(int(ScopeType.VCD_SCOPE), _parse_scope)
 register_subparser(int(ScopeType.VCD_UPSCOPE), _parse_upscope)
 register_subparser(int(ScopeType.GEN_ATTRBEGIN), _parse_attrbegin)

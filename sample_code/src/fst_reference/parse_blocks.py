@@ -7,8 +7,9 @@ import struct
 import shutil
 from pathlib import Path
 from .block.handlers import BLOCKS
-FMT_U8 = '>B'
-FMT_U64 = '>Q'
+
+FMT_U8 = ">B"
+FMT_U64 = ">Q"
 
 
 def extract_blocks(fst_path, output_dir=None):
@@ -20,7 +21,7 @@ def extract_blocks(fst_path, output_dir=None):
 
     # Open file and parse blocks sequentially. This is an experimental parser so
     # we keep checks minimal and assume well-formed input.
-    with input_fst_path.open('rb') as f:
+    with input_fst_path.open("rb") as f:
         idx = 0
         f.seek(0, 2)
         file_end = f.tell()
@@ -47,22 +48,31 @@ def extract_blocks(fst_path, output_dir=None):
             if block_entry is None:
                 snippet = payload[:64]
                 hexp = snippet.hex()
-                ascp = ''.join([chr(b) if 32 <= b <= 126 else '.' for b in snippet])
-                raise RuntimeError(f"Unregistered block type {block_type} at offset {offset}; next_bytes_hex={hexp}; ascii_preview={ascp}")
-            handler = block_entry['handler']
+                ascp = "".join([chr(b) if 32 <= b <= 126 else "." for b in snippet])
+                raise RuntimeError(
+                    f"Unregistered block type {block_type} at offset {offset}; next_bytes_hex={hexp}; ascii_preview={ascp}"
+                )
+            handler = block_entry["handler"]
             if len(payload) < payload_len:
-                print(f"#{idx} offset={offset}: payload too short {len(payload)} < {payload_len}")
+                print(
+                    f"#{idx} offset={offset}: payload too short {len(payload)} < {payload_len}"
+                )
             # Let handler exceptions propagate so we get full traceback for debugging
-            handler(payload, idx, block_entry['name'], offset, base_dir)
+            handler(payload, idx, block_entry["name"], offset, base_dir)
             idx += 1
+
 
 def main():
     parser = argparse.ArgumentParser(
-        description='Simple parser for FST blocks: 1 byte type, 8 byte length',
-        formatter_class=argparse.RawDescriptionHelpFormatter
+        description="Simple parser for FST blocks: 1 byte type, 8 byte length",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
     )
-    parser.add_argument('input_fst', help='FST file to parse')
-    parser.add_argument('--output_dir', help='Directory to save extracted blocks', default='output_blocks')
+    parser.add_argument("input_fst", help="FST file to parse")
+    parser.add_argument(
+        "--output_dir",
+        help="Directory to save extracted blocks",
+        default="output_blocks",
+    )
 
     args = parser.parse_args()
 
