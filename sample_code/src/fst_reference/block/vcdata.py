@@ -67,9 +67,9 @@ def _parse_tail(br: ByteReader):
     )
 
 
-def _parse_time_data(dec_time: bytes, expected_count: int):
+def _parse_time_data(dec_time: bytes, expected_count: int) -> list[int]:
     br = ByteReader(dec_time)
-    timestamps = []
+    timestamps: list[int] = []
     cur_time = 0
     for _i in range(expected_count):
         time_diff = br.read_uleb128()[0]
@@ -78,9 +78,9 @@ def _parse_time_data(dec_time: bytes, expected_count: int):
     return timestamps
 
 
-def _parse_position_data(position_data: bytes):
+def _parse_position_data(position_data: bytes) -> list[int]:
     br = ByteReader(position_data)
-    positions = []
+    positions: list[int] = []
     prev_alias = 0
     while br.remaining() > 0:
         if (br.peek_bytes(1)[0] & 1) != 0:
