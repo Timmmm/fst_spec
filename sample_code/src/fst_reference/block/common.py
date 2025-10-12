@@ -1,5 +1,6 @@
 import os
 import io
+import struct
 
 
 def write_blob(
@@ -78,56 +79,42 @@ class ByteReader:
         b = self.read_bytes(2)
         if len(b) < 2:
             raise EOFError("read_u16: unexpected EOF")
-        import struct
-
         return struct.unpack(">H", b)[0]
 
     def read_u32(self) -> int:
         b = self.read_bytes(4)
         if len(b) < 4:
             raise EOFError("read_u32: unexpected EOF")
-        import struct
-
         return struct.unpack(">I", b)[0]
 
     def read_u64(self) -> int:
         b = self.read_bytes(8)
         if len(b) < 8:
             raise EOFError("read_u64: unexpected EOF")
-        import struct
-
         return struct.unpack(">Q", b)[0]
 
     def read_i8(self) -> int:
         b = self.read_bytes(1)
         if not b:
             raise EOFError("read_i8: unexpected EOF")
-        import struct
-
         return struct.unpack(">b", b)[0]
 
     def read_i32(self) -> int:
         b = self.read_bytes(4)
         if len(b) < 4:
             raise EOFError("read_i32: unexpected EOF")
-        import struct
-
         return struct.unpack(">i", b)[0]
 
     def read_i64(self) -> int:
         b = self.read_bytes(8)
         if len(b) < 8:
             raise EOFError("read_i64: unexpected EOF")
-        import struct
-
         return struct.unpack(">q", b)[0]
 
     def read_double(self) -> float:
         b = self.read_bytes(8)
         if len(b) < 8:
             raise EOFError("read_double: unexpected EOF")
-        import struct
-
         return struct.unpack(">d", b)[0]
 
     def read_uleb128(self) -> tuple[int, int]:
@@ -172,8 +159,6 @@ class ByteReader:
         Move back 8 bytes from current cursor and read a big-endian u64.
         """
         self.seek(-8, io.SEEK_CUR)
-        import struct
-
         return struct.unpack(">Q", self.peek_bytes(8))[0]
 
     def read_bytes_rev(self, n: int) -> bytes:
