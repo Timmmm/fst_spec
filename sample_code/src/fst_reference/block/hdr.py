@@ -3,8 +3,8 @@ HDR block handler and parser
 Parses the HDR block layout and writes a JSON with header fields.
 """
 
-from .common import write_blob, ByteReader
 import json
+from .common import write_blob, ByteReader
 
 
 def CallHDR(payload: bytes, idx: int, block_str: str, offset: int, output_dir: str):
@@ -29,7 +29,7 @@ def CallHDR(payload: bytes, idx: int, block_str: str, offset: int, output_dir: s
     timescale = br.read_i8()
     writer_bytes = br.read_bytes(128)
     date_bytes = br.read_bytes(26)
-    reserved_bytes = br.read_bytes(321 - 228)
+    _reserved_bytes = br.read_bytes(321 - 228)
     filetype = br.read_u8()
     timezero = br.read_i64()
 
@@ -66,5 +66,3 @@ def CallHDR(payload: bytes, idx: int, block_str: str, offset: int, output_dir: s
         "json",
         json.dumps(result, indent=2, ensure_ascii=False).encode("utf-8"),
     )
-
-    return

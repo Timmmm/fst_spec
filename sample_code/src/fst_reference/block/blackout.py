@@ -19,7 +19,7 @@ def CallBLACKOUT(
     try:
         br = ByteReader(payload)
         br.seek(0)
-        count, n = br.read_uleb128()
+        count, _n = br.read_uleb128()
         result["count"] = count
 
         for i in range(count):
@@ -33,7 +33,7 @@ def CallBLACKOUT(
             else:
                 state = f"unknown({state_b})"
 
-            ts, m = br.read_uleb128()
+            ts, _m = br.read_uleb128()
             result["entries"].append({"state": state, "timestamp": ts})
 
     except Exception as e:

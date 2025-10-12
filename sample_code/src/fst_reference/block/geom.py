@@ -3,9 +3,9 @@ GEOM block handler
 Parses geometry blocks: writes header JSON, decompressed binary, and decoded LEB128 values JSON.
 """
 
-from .common import write_blob, ByteReader
 import zlib
 import json
+from .common import write_blob, ByteReader
 
 
 def CallGEOM(payload: bytes, idx: int, block_str: str, offset: int, output_dir: str):

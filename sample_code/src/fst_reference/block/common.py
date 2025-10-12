@@ -135,7 +135,7 @@ class ByteReader:
             b = self.data[pos]
             pos += 1
             result |= (b & 0x7F) << shift
-            if not (b & 0x80):
+            if b & 0x80 == 0:
                 break
             if shift > 63:
                 # While FST allows more than 64 bits, we limit to 64 bits here

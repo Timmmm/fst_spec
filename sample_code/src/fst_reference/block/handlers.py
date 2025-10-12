@@ -4,13 +4,14 @@ Central registry for block types and their handlers.
 Handlers follow the signature: handler(first4_bytes, file_obj, offset, payload_len, block_str, output_dir)
 """
 
+from enum import IntEnum
+
 from .hdr import CallHDR
 from .vcdata import CallVCDATA
 from .geom import CallGEOM
 from .hier import CallHIER_GZ, CallHIER_LZ4, CallHIER_LZ4DUO
 from .blackout import CallBLACKOUT
 
-from enum import IntEnum
 
 
 # FST block header definitions

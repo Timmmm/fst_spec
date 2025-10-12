@@ -1,10 +1,10 @@
-from .common import write_blob, ByteReader
 import json
 import zlib
 import lz4.block
 import io
 from typing import List
 
+from .common import write_blob, ByteReader
 
 def _parse_head(br: ByteReader):
     vc_start_time = br.read_u64()
@@ -68,7 +68,7 @@ def _parse_tail(br: ByteReader):
 
 def _parse_time_data(dec_time: bytes, expected_count: int):
     br = ByteReader(dec_time)
-    timestamps = list()
+    timestamps = []
     cur_time = 0
     for i in range(expected_count):
         time_diff = br.read_uleb128()[0]
@@ -79,7 +79,7 @@ def _parse_time_data(dec_time: bytes, expected_count: int):
 
 def _parse_position_data(position_data: bytes):
     br = ByteReader(position_data)
-    positions = list()
+    positions = []
     prev_alias = 0
     while br.remaining() > 0:
         if (br.peek_bytes(1)[0] & 1) != 0:
@@ -118,7 +118,7 @@ def _parse_wave_data(wave_data: bytes, positions: List[int]):
     if prev_i_has_data != -1:
         position_bytes[prev_i_has_data] = len(wave_data) - cur_offset
 
-    wave_json = list()
+    wave_json = []
     br = ByteReader(wave_data)
     for i, (pos, offset, num_bytes) in enumerate(
         zip(positions, position_offsets, position_bytes)

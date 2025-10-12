@@ -4,12 +4,12 @@ Handlers for hierarchy-related block types: HIER_GZ, HIER_LZ4, HIER_LZ4DUO.
 Each handler writes a header JSON (00), the raw uncompressed binary (01) for debug, and a parsed JSON (02).
 """
 
-from .common import write_blob
-from . import hier_data
 import struct
 import json
 import zlib
 import gzip
+from .common import write_blob
+from . import hier_data
 
 
 def _u64(b, i):
