@@ -1,0 +1,5 @@
+# Output for the parse_blocks script.
+/output_blocks
+
+# Python cache files
+__pycache__/
