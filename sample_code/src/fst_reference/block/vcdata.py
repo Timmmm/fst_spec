@@ -6,6 +6,7 @@ from typing import List
 
 from .common import write_blob, ByteReader
 
+
 def _parse_head(br: ByteReader):
     vc_start_time = br.read_u64()
     vc_end_time = br.read_u64()
@@ -70,7 +71,7 @@ def _parse_time_data(dec_time: bytes, expected_count: int):
     br = ByteReader(dec_time)
     timestamps = []
     cur_time = 0
-    for i in range(expected_count):
+    for _i in range(expected_count):
         time_diff = br.read_uleb128()[0]
         cur_time += time_diff
         timestamps.append(cur_time)
@@ -165,7 +166,7 @@ def CallVCDATA(payload: bytes, idx: int, block_str: str, offset: int, output_dir
     """
     base_dir = output_dir
     payload_len = len(payload)
-    info = dict()
+    info = {}
 
     # Cite from adoc:
     # It contains four tables - the bits array, waves table, position table and time table.

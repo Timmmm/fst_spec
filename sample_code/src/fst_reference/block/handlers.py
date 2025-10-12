@@ -13,7 +13,6 @@ from .hier import CallHIER_GZ, CallHIER_LZ4, CallHIER_LZ4DUO
 from .blackout import CallBLACKOUT
 
 
-
 # FST block header definitions
 class BlockType(IntEnum):
     HDR = 0

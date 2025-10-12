@@ -9,8 +9,9 @@ Includes default subparsers for common hierarchy entries: SCOPE, UPSCOPE, VAR, A
 """
 
 from typing import Callable, Dict, Iterable
-from .common import ByteReader
 from enum import IntEnum
+
+from .common import ByteReader
 
 
 class ScopeType(IntEnum):
@@ -207,7 +208,7 @@ def _parse_attrbegin(br: ByteReader) -> object:
         "attrtype": attrtype,
         "subtype": subtype,
     }
-    if subtype == 4 or subtype == 5:
+    if subtype in (4, 5):
         ret["attr_value1"] = br.read_uleb128()[0]
         assert br.read_u8() == 0  # null terminator
         ret["attr_value2"] = br.read_uleb128()[0]
