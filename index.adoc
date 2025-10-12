@@ -5,9 +5,11 @@ Tim Hutt
 :toc: left
 :toclevels: 3
 
+https://github.com/Timmmm/fst_spec[Source code for this document]
+
 == Introduction
 
-WARNING: This is an incomplete draft! Also I didn’t create the FST format so there may be errors in this specification. If you find any please let me know.
+WARNING: This is an incomplete draft! Also I didn’t create the FST format so there may be errors in this specification. If you find any please https://github.com/Timmmm/fst_spec/issues/new[let me know].
 
 The only standard format for storing digital waveforms from HDL simulations is https://en.wikipedia.org/wiki/Value_change_dump[VCD] (Value Change Dump). Unfortunately it’s an ancient and hilariously inefficient text based format. It’s really only suitable for tiny projects. As a result most commercial EDA vendors use their own more efficient proprietary formats, for example Synopsys's VCS simulator uses FSDB (Fast Signal DataBase) and Mentor's Questa simulator uses WLF (Wave Log Format).
 
