@@ -160,10 +160,7 @@ def _parse_scope(br: ByteReader) -> dict[str, Any]:
     name, _nlen = br.read_cstring()
     comp, _clen = br.read_cstring()
     _consumed = br.tell() - start
-    try:
-        st_name = ScopeType(scopetype).name
-    except Exception:
-        st_name = f"UNKNOWN_{scopetype}"
+    st_name = ScopeType(scopetype).name if scopetype in ScopeType else f"UNKNOWN_{scopetype}"
 
     ret = {
         "type": "SCOPE",
