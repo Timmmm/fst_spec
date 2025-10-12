@@ -52,13 +52,12 @@ def extract_blocks(fst_path: str, output_dir: str) -> None:
                 raise RuntimeError(
                     f"Unregistered block type {block_type} at offset {offset}; next_bytes_hex={hexp}; ascii_preview={ascp}"
                 )
-            handler = block_entry["handler"]
             if len(payload) < payload_len:
                 print(
                     f"#{idx} offset={offset}: payload too short {len(payload)} < {payload_len}"
                 )
             # Let handler exceptions propagate so we get full traceback for debugging
-            handler(payload, idx, block_entry["name"], offset, base_dir)
+            block_entry.handler(payload, idx, block_entry.name, offset, base_dir)
             idx += 1
 
 

@@ -5,6 +5,7 @@ Handlers follow the signature: handler(first4_bytes, file_obj, offset, payload_l
 """
 
 from enum import IntEnum
+from typing import Callable, NamedTuple
 
 from .hdr import CallHDR
 from .vcdata import CallVCDATA
@@ -35,21 +36,25 @@ def _unsupported_block_handler(
         f"Block type {block_str} at offset {offset} is recognized but not yet supported in this parser."
     )
 
+class BlockHandler(NamedTuple):
+    name: str
+    handler: Callable[[bytes, int, str, int, str], None]
 
-BLOCKS = {
-    BlockType.HDR.value: {"name": "HDR", "handler": CallHDR},
-    BlockType.BLACKOUT.value: {"name": "BLACKOUT", "handler": CallBLACKOUT},
-    BlockType.GEOM.value: {"name": "GEOM", "handler": CallGEOM},
-    BlockType.HIER_GZ.value: {"name": "HIER_GZ", "handler": CallHIER_GZ},
-    BlockType.HIER_LZ4.value: {"name": "HIER_LZ4", "handler": CallHIER_LZ4},
-    BlockType.HIER_LZ4DUO.value: {"name": "HIER_LZ4DUO", "handler": CallHIER_LZ4DUO},
-    BlockType.VCDATA.value: {"name": "VCDATA", "handler": _unsupported_block_handler},
-    BlockType.VCDATA_DYN_ALIAS.value: {
-        "name": "VCDATA_DYN_ALIAS",
-        "handler": _unsupported_block_handler,
-    },
-    BlockType.VCDATA_DYN_ALIAS2.value: {
-        "name": "VCDATA_DYN_ALIAS2",
-        "handler": CallVCDATA,
-    },
+
+BLOCKS: dict[int, BlockHandler] = {
+    BlockType.HDR.value: BlockHandler(name="HDR", handler=CallHDR),
+    BlockType.BLACKOUT.value: BlockHandler(name="BLACKOUT", handler=CallBLACKOUT),
+    BlockType.GEOM.value: BlockHandler(name="GEOM", handler=CallGEOM),
+    BlockType.HIER_GZ.value: BlockHandler(name="HIER_GZ", handler=CallHIER_GZ),
+    BlockType.HIER_LZ4.value: BlockHandler(name="HIER_LZ4", handler=CallHIER_LZ4),
+    BlockType.HIER_LZ4DUO.value: BlockHandler(name="HIER_LZ4DUO", handler=CallHIER_LZ4DUO),
+    BlockType.VCDATA.value: BlockHandler(name="VCDATA", handler=_unsupported_block_handler),
+    BlockType.VCDATA_DYN_ALIAS.value: BlockHandler(
+        name="VCDATA_DYN_ALIAS",
+        handler=_unsupported_block_handler,
+    ),
+    BlockType.VCDATA_DYN_ALIAS2.value: BlockHandler(
+        name="VCDATA_DYN_ALIAS2",
+        handler=CallVCDATA,
+    ),
 }
