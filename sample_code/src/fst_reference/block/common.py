@@ -57,14 +57,18 @@ class ByteReader:
         return max(0, self.length - self.offset)
 
     def peek_bytes(self, n: int) -> bytes:
-        """Read `n` bytes from current offset without moving the cursor."""
+        """
+        Read `n` bytes from current offset without moving the cursor.
+        """
         if n <= 0:
             return b""
         end = min(self.offset + n, self.length)
         return self.data[self.offset : end]
 
     def read_bytes(self, n: int) -> bytes:
-        """Read `n` bytes from current offset and move the cursor forward."""
+        """
+        Read `n` bytes from current offset and move the cursor forward.
+        """
         ret = self.peek_bytes(n)
         self.offset += len(ret)
         return ret
