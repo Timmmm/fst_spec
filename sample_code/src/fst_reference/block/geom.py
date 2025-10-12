@@ -45,7 +45,7 @@ def CallGEOM(payload: bytes, idx: int, block_str: str, offset: int, output_dir: 
     write_blob(base_dir, idx, block_str, offset, payload_len, 0, "header.json", jbytes)
     write_blob(base_dir, idx, block_str, offset, payload_len, 0, "dec.bin", dec)
 
-    values = []
+    values: list[int] = []
     if dec:
         br2 = ByteReader(dec)
         while br2.remaining() > 0 and len(values) < count:
