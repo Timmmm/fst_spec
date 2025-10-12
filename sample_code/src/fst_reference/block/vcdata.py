@@ -1,8 +1,8 @@
 import json
+from typing import Any
 import zlib
-import lz4.block
+import lz4.block  # type: ignore
 import io
-from typing import List
 
 from .common import write_blob, ByteReader
 
@@ -103,7 +103,7 @@ def _parse_position_data(position_data: bytes) -> list[int]:
     return positions
 
 
-def _parse_wave_data(wave_data: bytes, positions: List[int]):
+def _parse_wave_data(wave_data: bytes, positions: list[int]) -> list[dict[str, Any]]:
     prev_i_has_data = -1
     # -1 is for compensating the first increment (see _parse_position_data's comment)
     cur_offset = -1
@@ -119,12 +119,12 @@ def _parse_wave_data(wave_data: bytes, positions: List[int]):
     if prev_i_has_data != -1:
         position_bytes[prev_i_has_data] = len(wave_data) - cur_offset
 
-    wave_json = []
+    wave_json: list[dict[str, Any]] = []
     br = ByteReader(wave_data)
     for i, (pos, offset, num_bytes) in enumerate(
         zip(positions, position_offsets, position_bytes)
     ):
-        entry = {"var_idx": i}
+        entry: dict[str, Any] = {"var_idx": i}
         if pos > 0:
             pass
             br.seek(offset)

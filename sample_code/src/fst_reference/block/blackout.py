@@ -4,6 +4,7 @@ Parse payload: LEB128 count, then `count` entries of (1 byte state, LEB128 times
 State: 0 -> off, 1 -> on. Produce a single JSON file with entries.
 """
 
+from typing import Any
 from .common import write_blob, ByteReader
 import json
 
@@ -14,7 +15,7 @@ def CallBLACKOUT(
     base_dir = output_dir
     payload_len = len(payload)
 
-    result = {"offset": offset, "payload_len": payload_len, "entries": []}
+    result: dict[str, Any] = {"offset": offset, "payload_len": payload_len, "entries": []}
 
     try:
         br = ByteReader(payload)

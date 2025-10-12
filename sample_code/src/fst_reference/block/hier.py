@@ -6,6 +6,7 @@ Each handler writes a header JSON (00), the raw uncompressed binary (01) for deb
 
 import struct
 import json
+from typing import Any
 import zlib
 import gzip
 from .common import write_blob
@@ -65,7 +66,7 @@ def _write_hier_result(
     offset: int,
     payload_len: int,
     block_str: str,
-    info,
+    info: dict[str, Any],
     final_bytes: bytes,
 ) -> None:
     """

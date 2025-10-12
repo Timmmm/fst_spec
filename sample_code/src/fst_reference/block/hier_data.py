@@ -8,7 +8,7 @@ Provides a minimal framework to parse the uncompressed hierarchy binary produced
 Includes default subparsers for common hierarchy entries: SCOPE, UPSCOPE, VAR, ATTRBEGIN, ATTREND.
 """
 
-from typing import Callable, Dict, Iterable
+from typing import Any, Callable, Iterable
 from enum import IntEnum
 
 from .common import ByteReader
@@ -79,10 +79,10 @@ class VarType(IntEnum):
 # Global state: count of non-alias variables (assigned sequential IDs starting at 0)
 _non_alias_var_count = 0
 
-_subparsers: Dict[int, Callable[[ByteReader], object]] = {}
+_subparsers: dict[int, Callable[[ByteReader], dict[str, Any]]] = {}
 
 
-def register_subparser(tag_byte: int, fn: Callable[[ByteReader], object]):
+def register_subparser(tag_byte: int, fn: Callable[[ByteReader], dict[str, Any]]):
     """
     Register a subparser for a given leading tag byte.
     fn receives a ByteReader positioned at the tag byte and must consume bytes from it.
@@ -92,12 +92,12 @@ def register_subparser(tag_byte: int, fn: Callable[[ByteReader], object]):
     _subparsers[tag_byte & 0xFF] = fn
 
 
-def register_subparsers(tag_bytes: Iterable[int], fn: Callable[[ByteReader], object]):
+def register_subparsers(tag_bytes: Iterable[int], fn: Callable[[ByteReader], dict[str, Any]]):
     for tag in tag_bytes:
         register_subparser(tag, fn)
 
 
-def parse_hier_binary(data: bytes) -> dict:
+def parse_hier_binary(data: bytes) -> dict[str, Any]:
     """
     Parse sequentially from offset 0 until an unknown tag is encountered.
 
@@ -106,7 +106,7 @@ def parse_hier_binary(data: bytes) -> dict:
 
     total = len(data)
     off = 0
-    data_list = []
+    data_list: list[dict[str, Any]] = []
     br = ByteReader(data)
 
     while off < total:
@@ -146,7 +146,7 @@ def parse_hier_binary(data: bytes) -> dict:
 # It must return (consumed_bytes, parsed_object). Consumed includes the tag byte.
 
 
-def _parse_scope(br: ByteReader) -> object:
+def _parse_scope(br: ByteReader) -> dict[str, Any]:
     # tag (1) + scopetype (1) + name\0 + comp\0
     start = br.tell()
     blen = br.length
@@ -175,14 +175,14 @@ def _parse_scope(br: ByteReader) -> object:
     return ret
 
 
-def _parse_upscope(br: ByteReader) -> object:
+def _parse_upscope(br: ByteReader) -> dict[str, Any]:
     # tag only
     _start = br.tell()
     _tag = br.read_u8()
     return {"type": "UPSCOPE"}
 
 
-def _parse_attrbegin(br: ByteReader) -> object:
+def _parse_attrbegin(br: ByteReader) -> dict[str, Any]:
     # tag(1) + attrtype(1) + subtype(1) + name\0 + arg(varint)
     _start = br.tell()
     _tag = br.read_u8()
@@ -219,13 +219,13 @@ def _parse_attrbegin(br: ByteReader) -> object:
     return ret
 
 
-def _parse_attrend(br: ByteReader) -> object:
+def _parse_attrend(br: ByteReader) -> dict[str, Any]:
     # placeholder for ATTREND; no payload
     _tag = br.read_u8()
     return {"type": "ATTREND"}
 
 
-def _parse_var(br: ByteReader) -> object:
+def _parse_var(br: ByteReader) -> dict[str, Any]:
     """
     Parse when buffer at offset begins with Var::Type directly (no leading Hierarchy tag).
     Format: vt(1) + name\0 + len(varint) + alias(varint)
