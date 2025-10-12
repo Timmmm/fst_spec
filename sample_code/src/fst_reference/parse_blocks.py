@@ -12,7 +12,7 @@ FMT_U8 = ">B"
 FMT_U64 = ">Q"
 
 
-def extract_blocks(fst_path, output_dir=None):
+def extract_blocks(fst_path: str, output_dir: str) -> None:
     input_fst_path = Path(fst_path).resolve()
     output_path = Path(output_dir).resolve()
     shutil.rmtree(output_path, ignore_errors=True)

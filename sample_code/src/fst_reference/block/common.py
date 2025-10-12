@@ -3,7 +3,14 @@ import io
 
 
 def write_blob(
-    base_dir, block_idx, block_type: str, offset, payload_len, sub_idx, ext, data_bytes
+    base_dir: str,
+    block_idx: int,
+    block_type: str,
+    offset: int,
+    payload_len: int,
+    sub_idx: int,
+    ext: str,
+    data_bytes: bytes,
 ):
     """
     Write an arbitrary blob (JSON, binary) using a stable filename format:
