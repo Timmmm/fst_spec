@@ -36,6 +36,7 @@ def _unsupported_block_handler(
         f"Block type {block_str} at offset {offset} is recognized but not yet supported in this parser."
     )
 
+
 class BlockHandler(NamedTuple):
     name: str
     handler: Callable[[bytes, int, str, int, str], None]
@@ -47,8 +48,12 @@ BLOCKS: dict[int, BlockHandler] = {
     BlockType.GEOM.value: BlockHandler(name="GEOM", handler=CallGEOM),
     BlockType.HIER_GZ.value: BlockHandler(name="HIER_GZ", handler=CallHIER_GZ),
     BlockType.HIER_LZ4.value: BlockHandler(name="HIER_LZ4", handler=CallHIER_LZ4),
-    BlockType.HIER_LZ4DUO.value: BlockHandler(name="HIER_LZ4DUO", handler=CallHIER_LZ4DUO),
-    BlockType.VCDATA.value: BlockHandler(name="VCDATA", handler=_unsupported_block_handler),
+    BlockType.HIER_LZ4DUO.value: BlockHandler(
+        name="HIER_LZ4DUO", handler=CallHIER_LZ4DUO
+    ),
+    BlockType.VCDATA.value: BlockHandler(
+        name="VCDATA", handler=_unsupported_block_handler
+    ),
     BlockType.VCDATA_DYN_ALIAS.value: BlockHandler(
         name="VCDATA_DYN_ALIAS",
         handler=_unsupported_block_handler,

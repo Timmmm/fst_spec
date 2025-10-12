@@ -41,6 +41,4 @@ def CallBLACKOUT(
 
     jbytes = json.dumps(result, ensure_ascii=False, indent=2).encode("utf-8")
     block_len = payload_len + 8  # FST block = 8 bytes header + payload
-    write_blob(
-        base_dir, idx, block_str, offset, block_len, 0, "BLACKOUT.json", jbytes
-    )
+    write_blob(base_dir, idx, block_str, offset, block_len, 0, "BLACKOUT.json", jbytes)
