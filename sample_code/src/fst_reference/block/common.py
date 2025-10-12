@@ -160,21 +160,6 @@ class ByteReader:
             result = result - (1 << bit_width)
         return result, length
 
-    def read_svarint_list(self, n: int = 16):
-        """
-        Read up to n signed LEB128s from current offset.
-
-        Returns list of tuples (start_offset, length, value). Advances reader.
-        """
-        out = []
-        for _ in range(n):
-            if self.remaining() <= 0:
-                break
-            start = self.offset
-            v, ln = self.read_svarint()
-            out.append((start, ln, v))
-        return out
-
     def read_u64_rev(self) -> int:
         """
         Move back 8 bytes from current cursor and read a big-endian u64.
