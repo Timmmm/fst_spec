@@ -183,14 +183,14 @@ class ByteReader:
         self.seek(-n, io.SEEK_CUR)
         return self.peek_bytes(n)
 
-    def read_cstring(self) -> tuple:
+    def read_cstring(self) -> tuple[str, int]:
         """
         Read a null-terminated C string from current offset. Returns (str, length_including_null).
         """
         # backward compatible signature without max_size
         return self.read_cstring_max(None)
 
-    def read_cstring_max(self, max_size: int = None) -> tuple:
+    def read_cstring_max(self, max_size: int | None = None) -> tuple[str, int]:
         """
         Read a null-terminated C string from current offset.
 
