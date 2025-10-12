@@ -1,6 +1,7 @@
 from .common import write_blob, ByteReader
 import json
-import zlib, lz4.block
+import zlib
+import lz4.block
 import io
 from typing import List
 

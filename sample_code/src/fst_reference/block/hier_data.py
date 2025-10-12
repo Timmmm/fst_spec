@@ -8,7 +8,7 @@ Provides a minimal framework to parse the uncompressed hierarchy binary produced
 Includes default subparsers for common hierarchy entries: SCOPE, UPSCOPE, VAR, ATTRBEGIN, ATTREND.
 """
 
-from typing import Callable, Dict, List, Tuple, Iterable
+from typing import Callable, Dict, Iterable
 from .common import ByteReader
 from enum import IntEnum
 

@@ -5,7 +5,6 @@ Parses the HDR block layout and writes a JSON with header fields.
 
 from .common import write_blob, ByteReader
 import json
-import os
 
 
 def CallHDR(payload: bytes, idx: int, block_str: str, offset: int, output_dir: str):
@@ -34,7 +33,7 @@ def CallHDR(payload: bytes, idx: int, block_str: str, offset: int, output_dir: s
     filetype = br.read_u8()
     timezero = br.read_i64()
 
-    assert br.tell() == 321, f"Bug: we do not seem to have consumed all 321 bytes"
+    assert br.tell() == 321, "Bug: we do not seem to have consumed all 321 bytes"
 
     writer = writer_bytes.split(b"\x00", 1)[0].decode("utf-8", errors="ignore")
     date = date_bytes.split(b"\x00", 1)[0].decode("utf-8", errors="ignore")
