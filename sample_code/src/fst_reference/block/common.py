@@ -75,7 +75,7 @@ class ByteReader:
 
     def read_u8(self) -> int:
         b = self.read_bytes(1)
-        if not b:
+        if len(b) < 1:
             raise EOFError("read_u8: unexpected EOF")
         return b[0]
 
@@ -99,7 +99,7 @@ class ByteReader:
 
     def read_i8(self) -> int:
         b = self.read_bytes(1)
-        if not b:
+        if len(b) < 1:
             raise EOFError("read_i8: unexpected EOF")
         return struct.unpack(">b", b)[0]
 
