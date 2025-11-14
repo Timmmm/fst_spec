@@ -252,7 +252,7 @@ No data. This is just used to mark the end of an attribute.
 
 Enter a new scope (module, function, etc.).
 
-* `u8`: Type (see `ScopeType`).
+* `u8`: Type (see <<ScopeType>>).
 * `u8[up to 512]`: Name. This must be null terminated.
 * `u8[up to 512]`: Component. This must be null terminated.
 
@@ -262,7 +262,7 @@ No data. Just used to mark the end of a scope.
 
 *`FST_VT_VCD_*`*
 
-* `u8`: Direction for ports (see `VarDir`).
+* `u8`: Direction for ports (see <<VarDir>>).
 * `u8[up to 512]`: Name. This must be null terminated.
 * `varint`: Length of the variable in bits. If this is `FST_VT_VCD_PORT` the length interpreted differently.
 * `varint`: Structural alias to an existing variable ID. If this is an alias it is set to the variable ID plus 1. If it is not an alias it is set to 0 and the variable is assigned an ID one more than the previous non-aliased variable.
