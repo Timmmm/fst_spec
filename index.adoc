@@ -337,7 +337,7 @@ It contains four tables - the bits array, waves table, position table and time t
 
 ==== Bits Array
 
-The bits array stores the value of all signals at <<vc_start_time>>. <<vc_bits_data>> contains the value of each signal concatenated. The length of each is signal (in bits) is given in the <<Geometry Block>>. All values are stored using the ASCII encoding (`0`, `1`, `X`, `Z`, etc.) with one bit per byte. Variable length records are not stored because they have no state. Reals are stored as Native Endian `f64` (`f32` is never used even if that is the actual datatype in the simulation). It is unclear how reals with `X` bits are stored.
+The bits array stores the value of all signals at <<vc_start_time>>. <<vc_bits_data>> contains the value of each signal concatenated. The length of each signal (in bits) is given in the <<Geometry Block>>. All values are stored using the ASCII encoding (`0`, `1`, `X`, `Z`, etc.) with one bit per byte. Variable length records are not stored because they have no state. Reals are stored as Native Endian `f64` (`f32` is never used even if that is the actual datatype in the simulation). It is unclear how reals with `X` bits are stored.
 
 The Bits Array is optionally compressed with ZLib (if <<vc_bits_uncompressed_length>> and <<vc_bits_compressed_length>> are unequal).
 
