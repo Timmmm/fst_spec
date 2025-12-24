@@ -136,6 +136,7 @@ def _parse_wave_data(wave_data: bytes, positions: list[int]) -> list[dict[str, A
             if uncompressed_length == 0:
                 # The data is uncompressed
                 data = br.read_bytes(num_bytes - consumed)
+                entry["bin"] = data.hex()
             else:
                 ## TODO: only support lz4 compression for wave data now
                 data = br.read_bytes(compressed_length)
@@ -147,6 +148,7 @@ def _parse_wave_data(wave_data: bytes, positions: list[int]) -> list[dict[str, A
                         raise RuntimeError(
                             f"CallVCDATA: wave data uncompressed length mismatch for var {i}"
                         )
+                    entry["bin"] = dec_data.hex()
                 except Exception as e:
                     entry["lz4_error"] = f"decompression error: {str(e)}"
                 else:
