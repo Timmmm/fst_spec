@@ -381,17 +381,21 @@ The lowest bit indicates whether the value is 0/1 or not. 0 and 1 are encoded in
 
 If the variable is *not* a 1-bit value then the `time_index_delta` is encoded as its own `varint` together with an encoding mode bit:
 
-    time_index_delta << 1 | all_binary
+    time_index_delta << 1 | not_all_binary
 
-If `all_binary` is 1 then this means the value only contains 0's or 1's. There are no X's, Z's and so on. In this case the values are encoded as raw bits packed into a whole number of bytes.
+If `not_all_binary` is 0 then this means the value contains 0's or 1's, only. There are no X's, Z's and so on. In this case the values are encoded as raw bits packed into a whole number of bytes.  
+The bits will be aligned to MSB. Below is an example of 2 bits of 00, 01, 10, 11, with timedelta 1:
 
-// TODO: What endianness?
+    0x20 0x00
+    0x20 0x40
+    0x20 0x80
+    0x20 0xc0
 
-If `all_binary` is 0 then the data that follows is encoded as raw ASCII, e.g. "01Z011XX1".
+If `not_all_binary` is 1 then the data that follows is encoded as raw ASCII, e.g. "01Z011XX1".
 
 The rules for `FST_VT_VCD_REAL` are slightly different:
 
-* If `all_binary` is 0 then the bits of the `f64` are encoded as ASCII as before (this is unlikely to happen but it is possible). If they're 1 then it is a _native Endian_ `f64`.
+* If `not_all_binary` is 0 then the bits of the `f64` are encoded as ASCII as before (this is unlikely to happen but it is possible). If they're 1 then it is a _native Endian_ `f64`.
 
 ==== Position Table
 
