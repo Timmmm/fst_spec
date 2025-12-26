@@ -2,6 +2,7 @@ import io
 import json
 from typing import Any
 import zlib
+import fastlz
 import lz4.block  # type: ignore
 
 from .common import write_blob, ByteReader
@@ -103,7 +104,52 @@ def _parse_position_data(position_data: bytes) -> list[int]:
     return positions
 
 
-def _parse_wave_data(wave_data: bytes, positions: list[int]) -> list[dict[str, Any]]:
+def _decompress_wave_data(data: bytes, uncompressed_length: int, waves_packtype: int, var_idx: int) -> tuple[bytes, dict[str, str]]:
+    """
+    Decompress wave data based on the packtype.
+    Returns (decrypted_bytes, error_dict).
+    """
+    if waves_packtype == ord("Z") or waves_packtype == ord("!"):
+        # zlib compressed
+        try:
+            dec_data = zlib.decompress(data)
+            if len(dec_data) != uncompressed_length:
+                raise RuntimeError(
+                    f"CallVCDATA: wave data uncompressed length mismatch for var {var_idx}"
+                )
+            return dec_data, {"zlib_error": ""}
+        except Exception as e:
+            return b"", {"zlib_error": f"decompression error: {str(e)}"}
+    elif waves_packtype == ord("F"):
+        # FastLZ compressed
+        try:
+            dec_data = fastlz.decompress(data, uncompressed_length)
+            if len(dec_data) != uncompressed_length:
+                raise RuntimeError(
+                    f"CallVCDATA: wave data uncompressed length mismatch for var {var_idx}"
+                )
+            return dec_data, {"fastlz_error": ""}
+        except Exception as e:
+            return b"", {"fastlz_error": f"decompression error: {str(e)}"}
+    elif waves_packtype == ord("4"):
+        # lz4 compressed
+        try:
+            dec_data = lz4.block.decompress(
+                data, uncompressed_size=uncompressed_length
+            )
+            if len(dec_data) != uncompressed_length:
+                raise RuntimeError(
+                    f"CallVCDATA: wave data uncompressed length mismatch for var {var_idx}"
+                )
+            return dec_data, {"lz4_error": ""}
+        except Exception as e:
+            return b"", {"lz4_error": f"decompression error: {str(e)}"}
+    else:
+        # Unknown compression type
+        return b"", {"unknown_packtype_error": f"Unknown waves_packtype: {waves_packtype}"}
+
+
+def _parse_wave_data(wave_data: bytes, positions: list[int], waves_packtype: int) -> list[dict[str, Any]]:
     prev_i_has_data = -1
     # -1 is for compensating the first increment (see _parse_position_data's comment)
     cur_offset = -1
@@ -138,21 +184,10 @@ def _parse_wave_data(wave_data: bytes, positions: list[int]) -> list[dict[str, A
                 data = br.read_bytes(num_bytes - consumed)
                 entry["bin"] = data.hex()
             else:
-                ## TODO: only support lz4 compression for wave data now
                 data = br.read_bytes(compressed_length)
-                try:
-                    dec_data = lz4.block.decompress(
-                        data, uncompressed_size=uncompressed_length
-                    )
-                    if len(dec_data) != uncompressed_length:
-                        raise RuntimeError(
-                            f"CallVCDATA: wave data uncompressed length mismatch for var {i}"
-                        )
-                    entry["bin"] = dec_data.hex()
-                except Exception as e:
-                    entry["lz4_error"] = f"decompression error: {str(e)}"
-                else:
-                    entry["lz4_error"] = ""
+                dec_data, error_dict = _decompress_wave_data(data, uncompressed_length, waves_packtype, i)
+                entry["bin"] = dec_data.hex()
+                entry.update(error_dict)
         elif pos < 0:
             entry["type"] = "alias"
             entry["alias_of"] = -i - 1
@@ -218,10 +253,11 @@ def handle_vcdata(
     info["time_comp_len"] = time_comp_len
     info["position_length"] = position_length
 
+
     # continue to parse details
     time_array = _parse_time_data(dec_time, time_count)
     position_array = _parse_position_data(position_data)
-    wave_data = _parse_wave_data(wave_bin_data, position_array)
+    wave_data = _parse_wave_data(wave_bin_data, position_array, waves_packtype)
     info["position_count"] = len(position_array)
 
     write_blob(
