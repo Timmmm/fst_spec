@@ -386,12 +386,12 @@ If the variable is *not* a 1-bit value then the `time_index_delta` is encoded as
 If `non_binary` is 1 then this means the value contain values other than 0 and 1 (e.g. X, Z).
 If `non_binary` is 0 then the value only contains 0's and 1's.
 In this case the values are encoded as raw bits packed into a whole number of bytes.
-The bits will be aligned to MSB. Below is an example of 2 bits of 00, 01, 10, 11, with timedelta 1:
+The bits are stored in each byte in Big Endian order starting at the MSB. Below is an example of the sequence 0b00, 0b01, 0b10, 0b11, with `time_index_delta` of 1:
 
-    0x20 0x00
-    0x20 0x40
-    0x20 0x80
-    0x20 0xc0
+    0x02 0x00
+    0x02 0x80
+    0x02 0x40
+    0x02 0xc0
 
 If `non_binary` is 1 then the data that follows is encoded as raw ASCII, e.g. "01Z011XX1".
 
