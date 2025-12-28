@@ -133,20 +133,26 @@ def _parse_wave_data(wave_data: bytes, positions: list[int]) -> list[dict[str, A
             entry["offset"] = offset
             entry["uncompressed_length"] = uncompressed_length
             entry["compressed_length"] = compressed_length
-            ## TODO: only support lz4 compression for wave data now
-            data = br.read_bytes(compressed_length)
-            try:
-                dec_data = lz4.block.decompress(
-                    data, uncompressed_size=uncompressed_length
-                )
-                if len(dec_data) != uncompressed_length:
-                    raise RuntimeError(
-                        f"CallVCDATA: wave data uncompressed length mismatch for var {i}"
-                    )
-            except Exception as e:
-                entry["lz4_error"] = f"decompression error: {str(e)}"
+            if uncompressed_length == 0:
+                # The data is uncompressed
+                data = br.read_bytes(num_bytes - consumed)
+                entry["bin"] = data.hex()
             else:
-                entry["lz4_error"] = ""
+                ## TODO: only support lz4 compression for wave data now
+                data = br.read_bytes(compressed_length)
+                try:
+                    dec_data = lz4.block.decompress(
+                        data, uncompressed_size=uncompressed_length
+                    )
+                    if len(dec_data) != uncompressed_length:
+                        raise RuntimeError(
+                            f"CallVCDATA: wave data uncompressed length mismatch for var {i}"
+                        )
+                    entry["bin"] = dec_data.hex()
+                except Exception as e:
+                    entry["lz4_error"] = f"decompression error: {str(e)}"
+                else:
+                    entry["lz4_error"] = ""
         elif pos < 0:
             entry["type"] = "alias"
             entry["alias_of"] = -i - 1
