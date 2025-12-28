@@ -252,7 +252,7 @@ No data. This is just used to mark the end of an attribute.
 
 Enter a new scope (module, function, etc.).
 
-* `u8`: Type (see `ScopeType`).
+* `u8`: Type (see <<ScopeType>>).
 * `u8[up to 512]`: Name. This must be null terminated.
 * `u8[up to 512]`: Component. This must be null terminated.
 
@@ -262,7 +262,7 @@ No data. Just used to mark the end of a scope.
 
 *`FST_VT_VCD_*`*
 
-* `u8`: Direction for ports (see `VarDir`).
+* `u8`: Direction for ports (see <<VarDir>>).
 * `u8[up to 512]`: Name. This must be null terminated.
 * `varint`: Length of the variable in bits. If this is `FST_VT_VCD_PORT` the length interpreted differently.
 * `varint`: Structural alias to an existing variable ID. If this is an alias it is set to the variable ID plus 1. If it is not an alias it is set to 0 and the variable is assigned an ID one more than the previous non-aliased variable.
@@ -337,7 +337,7 @@ It contains four tables - the bits array, waves table, position table and time t
 
 ==== Bits Array
 
-The bits array stores the value of all signals at <<vc_start_time>>. <<vc_bits_data>> contains the value of each signal concatenated. The length of each is signal (in bits) is given in the <<Geometry Block>>. All values are stored using the ASCII encoding (`0`, `1`, `X`, `Z`, etc.) with one bit per byte. Variable length records are not stored because they have no state. Reals are stored as Native Endian `f64` (`f32` is never used even if that is the actual datatype in the simulation). It is unclear how reals with `X` bits are stored.
+The bits array stores the value of all signals at <<vc_start_time>>. <<vc_bits_data>> contains the value of each signal concatenated. The length of each signal (in bits) is given in the <<Geometry Block>>. All values are stored using the ASCII encoding (`0`, `1`, `X`, `Z`, etc.) with one bit per byte. Variable length records are not stored because they have no state. Reals are stored as Native Endian `f64` (`f32` is never used even if that is the actual datatype in the simulation). It is unclear how reals with `X` bits are stored.
 
 The Bits Array is optionally compressed with ZLib (if <<vc_bits_uncompressed_length>> and <<vc_bits_compressed_length>> are unequal).
 
@@ -381,17 +381,21 @@ The lowest bit indicates whether the value is 0/1 or not. 0 and 1 are encoded in
 
 If the variable is *not* a 1-bit value then the `time_index_delta` is encoded as its own `varint` together with an encoding mode bit:
 
-    time_index_delta << 1 | all_binary
+    time_index_delta << 1 | not_all_binary
 
-If `all_binary` is 1 then this means the value only contains 0's or 1's. There are no X's, Z's and so on. In this case the values are encoded as raw bits packed into a whole number of bytes.
+If `not_all_binary` is 0 then this means the value contains 0's or 1's, only. There are no X's, Z's and so on. In this case the values are encoded as raw bits packed into a whole number of bytes.  
+The bits will be aligned to MSB. Below is an example of 2 bits of 00, 01, 10, 11, with timedelta 1:
 
-// TODO: What endianness?
+    0x20 0x00
+    0x20 0x40
+    0x20 0x80
+    0x20 0xc0
 
-If `all_binary` is 0 then the data that follows is encoded as raw ASCII, e.g. "01Z011XX1".
+If `not_all_binary` is 1 then the data that follows is encoded as raw ASCII, e.g. "01Z011XX1".
 
 The rules for `FST_VT_VCD_REAL` are slightly different:
 
-* If `all_binary` is 0 then the bits of the `f64` are encoded as ASCII as before (this is unlikely to happen but it is possible). If they're 1 then it is a _native Endian_ `f64`.
+* If `not_all_binary` is 0 then the bits of the `f64` are encoded as ASCII as before (this is unlikely to happen but it is possible). If they're 1 then it is a _native Endian_ `f64`.
 
 ==== Position Table
 
