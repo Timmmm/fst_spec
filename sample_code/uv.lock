@@ -3,15 +3,25 @@ revision = 3
 requires-python = ">=3.12"
 
 [[package]]
+name = "fastlz"
+version = "0.0.1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/1f/9c/c7f554d5cdd7a6b0718312c1b37cfbadc5b82a3fced8dfddc1bfd52790f8/fastlz-0.0.1.tar.gz", hash = "sha256:adcd69c92f819e84b64b5826d77446def5fd8beb75710952120166d579f3f1c7", size = 6350, upload-time = "2015-10-29T06:22:37.103Z" }
+
+[[package]]
 name = "fst-reference"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
+    { name = "fastlz" },
     { name = "lz4" },
 ]
 
 [package.metadata]
-requires-dist = [{ name = "lz4", specifier = ">=4,<5" }]
+requires-dist = [
+    { name = "fastlz", specifier = "==0.0.1" },
+    { name = "lz4", specifier = ">=4,<5" },
+]
 
 [[package]]
 name = "lz4"
