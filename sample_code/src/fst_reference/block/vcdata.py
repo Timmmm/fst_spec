@@ -104,49 +104,39 @@ def _parse_position_data(position_data: bytes) -> list[int]:
     return positions
 
 
-def _decompress_wave_data(data: bytes, uncompressed_length: int, waves_packtype: int, var_idx: int) -> tuple[bytes, dict[str, str]]:
+def _decompress_wave_data(data: bytes, uncompressed_length: int, waves_packtype: int, var_idx: int) -> bytes:
     """
     Decompress wave data based on the packtype.
-    Returns (decrypted_bytes, error_dict).
+    Returns decompressed bytes if succeed, or raises RuntimeError on any decompress failure.
     """
-    if waves_packtype == ord("Z") or waves_packtype == ord("!"):
-        # zlib compressed
-        try:
+    try:
+        if waves_packtype == ord("Z") or waves_packtype == ord("!"):
+            # zlib compressed
             dec_data = zlib.decompress(data)
-            if len(dec_data) != uncompressed_length:
-                raise RuntimeError(
-                    f"CallVCDATA: wave data uncompressed length mismatch for var {var_idx}"
-                )
-            return dec_data, {"zlib_error": ""}
-        except Exception as e:
-            return b"", {"zlib_error": f"decompression error: {str(e)}"}
-    elif waves_packtype == ord("F"):
-        # FastLZ compressed
-        try:
+        elif waves_packtype == ord("F"):
+            # FastLZ compressed
             dec_data = fastlz.decompress(data, uncompressed_length)
-            if len(dec_data) != uncompressed_length:
-                raise RuntimeError(
-                    f"CallVCDATA: wave data uncompressed length mismatch for var {var_idx}"
-                )
-            return dec_data, {"fastlz_error": ""}
-        except Exception as e:
-            return b"", {"fastlz_error": f"decompression error: {str(e)}"}
-    elif waves_packtype == ord("4"):
-        # lz4 compressed
-        try:
+        elif waves_packtype == ord("4"):
+            # lz4 compressed
             dec_data = lz4.block.decompress(
                 data, uncompressed_size=uncompressed_length
             )
-            if len(dec_data) != uncompressed_length:
-                raise RuntimeError(
-                    f"CallVCDATA: wave data uncompressed length mismatch for var {var_idx}"
-                )
-            return dec_data, {"lz4_error": ""}
-        except Exception as e:
-            return b"", {"lz4_error": f"decompression error: {str(e)}"}
-    else:
-        # Unknown compression type
-        return b"", {"unknown_packtype_error": f"Unknown waves_packtype: {waves_packtype}"}
+        else:
+            # Unknown compression type, should not happen
+            raise RuntimeError(
+                f"_decompress_wave_data: Unknown compression type for wave data for var {var_idx}"
+            )
+    except Exception as e:
+        raise RuntimeError(
+            f"_decompress_wave_data: Decompression error for var {var_idx}: {str(e)}"
+        ) from e
+
+    if len(dec_data) != uncompressed_length:
+        raise RuntimeError(
+            f"_decompress_wave_data: wave data uncompressed length {len(dec_data)} "
+            f"!= {uncompressed_length} for var {var_idx}"
+        )
+    return dec_data
 
 
 def _parse_wave_data(wave_data: bytes, positions: list[int], waves_packtype: int) -> list[dict[str, Any]]:
@@ -185,9 +175,8 @@ def _parse_wave_data(wave_data: bytes, positions: list[int], waves_packtype: int
                 entry["bin"] = data.hex()
             else:
                 data = br.read_bytes(compressed_length)
-                dec_data, error_dict = _decompress_wave_data(data, uncompressed_length, waves_packtype, i)
+                dec_data = _decompress_wave_data(data, uncompressed_length, waves_packtype, i)
                 entry["bin"] = dec_data.hex()
-                entry.update(error_dict)
         elif pos < 0:
             entry["type"] = "alias"
             entry["alias_of"] = -i - 1
