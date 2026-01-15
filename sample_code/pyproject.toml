@@ -6,6 +6,7 @@ description = "Sample code to decode FST wave files"
 readme = "README.md"
 dependencies = [
     "lz4 >=4, <5",
+    "fastlz == 0.0.1"
 ]
 
 [project.scripts]
