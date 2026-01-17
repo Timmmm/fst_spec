@@ -9,7 +9,7 @@ import json
 from typing import Any
 import zlib
 import gzip
-from .common import write_blob
+from .common import write_blob, ByteReader
 from . import hier_data
 
 
@@ -153,7 +153,7 @@ def handle_hier_lz4duo(
     payload: bytes, idx: int, block_str: str, offset: int, output_dir: str
 ):
     """
-    Handle HIER_LZ4DUO: payload contains uncompressed_length (8B), compressed_once_length (8B),
+    Handle HIER_LZ4DUO: payload contains uncompressed_length (8B), compressed_once_length (LEB128 varint),
     then data compressed twice with raw LZ4 blocks (first round then second round).
     """
     base_dir = output_dir
@@ -161,9 +161,10 @@ def handle_hier_lz4duo(
     if payload_len < 16:
         print(f"CallHIER_LZ4DUO: payload too small {payload_len}")
         return
-    uncompressed_length = _u64(payload, 0)
-    compressed_once_length = _u64(payload, 8)
-    data = payload[16:]
+    br = ByteReader(payload)
+    uncompressed_length = br.read_u64()
+    compressed_once_length, leb_bytes = br.read_uleb128()
+    data = payload[8 + leb_bytes:]
     info = {
         "offset": offset,
         "payload_len": payload_len,
