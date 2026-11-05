@@ -118,9 +118,9 @@ Note that the GtkWave code assumes that some ``varint``s fit inside 32 bits. How
 // ----
 // ====
 
-=== Design Heirarchy, Aliases and Variable IDs
+=== Design Hierarchy, Aliases and Variable IDs
 
-The <<Hiearchy Block>> describes the design hiearchy -- essentially all the modules and ports. Each recorded signal is called a _variable_. Since many of the variables are directly connected to each other in the design -- sometimes many times as with clocks and resets, FST allows you to declare some variables to be aliases of others. Every _distinct_ variable has a unique variable ID, numbered from 0 to `<<header_num_vars>>-1` based on the order that they appear in the <<Hierarchy Block>>.
+The <<Hierarchy Block>> describes the design hierarchy -- essentially all the modules and ports. Each recorded signal is called a _variable_. Since many of the variables are directly connected to each other in the design -- sometimes many times as with clocks and resets, FST allows you to declare some variables to be aliases of others. Every _distinct_ variable has a unique variable ID, numbered from 0 to `<<header_num_vars>>-1` based on the order that they appear in the <<Hierarchy Block>>.
 
 == Blocks
 
@@ -186,7 +186,7 @@ An FST file always starts with a header block. There is no magic number before i
 | [[header_real_endianness,`header_real_endianness`]]`header_real_endianness`       | 25     | `f64`     | The value _e_ (2.7182818284590452354). This is used as an endianness test for reals. See <<Endianness>>. This number can also be used as a magic number to check if a file is an FST file.
 | [[header_writer_memory_use,`header_writer_memory_use`]]`header_writer_memory_use` | 33     | `u64`     | Memory used when writing this file in bytes. For informational purposes.
 | [[header_num_scopes,`header_num_scopes`]]`header_num_scopes`                      | 41     | `u64`     | Number of scopes (`FST_ST_VCD_SCOPE` entries in the hierarchy).
-| [[header_num_hiearchy_vars,`header_num_hiearchy_vars`]]`header_num_hiearchy_vars` | 49     | `u64`     | Number of variables in the hierarchy.
+| [[header_num_hierarchy_vars,`header_num_hierarchy_vars`]]`header_num_hierarchy_vars` | 49     | `u64`     | Number of variables in the hierarchy.
 | [[header_num_vars,`header_num_vars`]]`header_num_vars`                            | 57     | `u64`     | Number of variables that are distinct - that is, not structurally equivalent. The same variable (e.g. a clock) may appear many times in the hierarchy but its values are only stored once.
 | [[header_num_vc_blocks,`header_num_vc_blocks`]]`header_num_vc_blocks`             | 65     | `u64`     | Number of <<Value Change Block,Value Change blocks>> in the file.
 | [[header_timescale,`header_timescale`]]`header_timescale`                         | 73     | `i8`      | Order of magnitude of the time unit. 0=1s, -9=1ns, etc.
@@ -221,7 +221,7 @@ The `hierarchy_data` compression method is given by `hierarchy_type` as follows:
 | <<FST_BL_HIER_LZ4DUO>> | LZ4 applied twice. The GtkWave code uses this if the hierarchy data is more than 4{nbsp}MB.
 |===
 
-The field `hiearchy_compressed_once_length` is only present if the block type is `FST_BL_HIER_LZ4DUO`. It records the length of the data after one application of LZ4.
+The field `hierarchy_compressed_once_length` is only present if the block type is `FST_BL_HIER_LZ4DUO`. It records the length of the data after one application of LZ4.
 
 Note that unlike elsewhere, the compression is unconditional. You shouldn't check whether the uncompressed length is the same as the compressed length.
 
